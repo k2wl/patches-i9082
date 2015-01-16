@@ -1,4 +1,4 @@
-From e394d4d31b6fdb0bfd35c168ffc553e816789cc7 Mon Sep 17 00:00:00 2001
+From 69c45503530be826331201266bfcca2a1d53d0d8 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Thu, 14 Nov 2013 15:19:46 +0700
 Subject: [PATCH 1/5] binder: add compat symbol
@@ -29,7 +29,7 @@ index dd04dcf..9ec2380 100644
 1.9.3 (Apple Git-50)
 
 
-From 4c326f8a7b291ece18b65fc4d5b4bf12ba752966 Mon Sep 17 00:00:00 2001
+From 3c1c8fbd65d49a66b49065b6d5d335bdc9bd67df Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Tue, 10 Dec 2013 19:38:17 +0700
 Subject: [PATCH 2/5] binder: add compat symbols
@@ -75,7 +75,7 @@ index 1dbb06f..8b36a54 100644
 1.9.3 (Apple Git-50)
 
 
-From 5d46eccc217aef45bc0c31e800af3952b2060c4b Mon Sep 17 00:00:00 2001
+From 002881b6470aafc2fa12aa9ae0156f37736bb2cb Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Mon, 16 Dec 2013 15:45:42 +0700
 Subject: [PATCH 3/5] sf: CAPRI_HWC: fix rotation artifact
@@ -104,7 +104,7 @@ index 3717ffd..7f5bd6b 100644
 1.9.3 (Apple Git-50)
 
 
-From 92c5acbc51f49236ee11fd341f996ef66fa968f0 Mon Sep 17 00:00:00 2001
+From 694378747a9866c6daab4ec315b4e8f760003f54 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Mon, 15 Dec 2014 23:12:44 +0700
 Subject: [PATCH 4/5] SurfaceComposerClient: don't block RGBA_8888 for
@@ -134,7 +134,7 @@ index 6ec4f23..40d0c81 100644
 1.9.3 (Apple Git-50)
 
 
-From 87e1aacd2306fd6bd7e02f1d626d002299e07df8 Mon Sep 17 00:00:00 2001
+From c9c7fd1f7970bba2ace5f83b693193a291fc290b Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 20 Dec 2014 19:09:27 +0700
 Subject: [PATCH 5/5] sf: CAPRI_HWC: fix for screen recording
