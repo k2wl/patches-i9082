@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+From 1d2eafe4b548d8f1363be588f1e10048682feb04 Mon Sep 17 00:00:00 2001
+=======
 From 784fba84aca658bc50b3b1ef75dec5aae104e44d Mon Sep 17 00:00:00 2001
+>>>>>>> 9d49662c31ee81e782df1181069c8fb75446a562
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Tue, 23 Dec 2014 22:15:37 +0700
 Subject: [PATCH 1/4] Telephony: fix 'up' navigation for SelectSubscription
@@ -66,7 +70,11 @@ index 645d209..6e24be0 100644
 1.9.3 (Apple Git-50)
 
 
+<<<<<<< HEAD
+From dc2a82298d90a71bcc74c3ed900edd4f1fdf26f2 Mon Sep 17 00:00:00 2001
+=======
 From a60a701bd4e403dcc9835a9d56e65f3082ff0104 Mon Sep 17 00:00:00 2001
+>>>>>>> 9d49662c31ee81e782df1181069c8fb75446a562
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 23 Nov 2014 15:57:20 +0700
 Subject: [PATCH 2/4] Telephony: MSim: enable preferred mode button for all
@@ -166,7 +174,11 @@ index 3a5a23c..a657981 100644
 1.9.3 (Apple Git-50)
 
 
+<<<<<<< HEAD
+From 3703a697e9c8a535a99f07b46cf2e05fa864b8e3 Mon Sep 17 00:00:00 2001
+=======
 From 95c9c0e9dbf70ce753643b45bcb22e1b6633ef9f Mon Sep 17 00:00:00 2001
+>>>>>>> 9d49662c31ee81e782df1181069c8fb75446a562
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Tue, 23 Dec 2014 22:27:09 +0700
 Subject: [PATCH 3/4] Telephony: HACK: fix 'up' for MSimCallFeature sub option
@@ -177,10 +189,17 @@ Change-Id: I1fcd9309d2849fbdd0ac1c903cbda4a8b1f213f5
  1 file changed, 7 insertions(+), 4 deletions(-)
 
 diff --git a/src/com/android/phone/CallFeaturesSetting.java b/src/com/android/phone/CallFeaturesSetting.java
+<<<<<<< HEAD
+index b130ff6..13737f6 100644
+--- a/src/com/android/phone/CallFeaturesSetting.java
++++ b/src/com/android/phone/CallFeaturesSetting.java
+@@ -2226,10 +2226,13 @@ public class CallFeaturesSetting extends PreferenceActivity
+=======
 index 2ed5514..ddea5e5 100644
 --- a/src/com/android/phone/CallFeaturesSetting.java
 +++ b/src/com/android/phone/CallFeaturesSetting.java
 @@ -2201,10 +2201,13 @@ public class CallFeaturesSetting extends PreferenceActivity
+>>>>>>> 9d49662c31ee81e782df1181069c8fb75446a562
       * This is useful for implementing "HomeAsUp" capability for second-level Settings.
       */
      public static void goUpToTopLevelSetting(Activity activity) {
@@ -202,7 +221,11 @@ index 2ed5514..ddea5e5 100644
 1.9.3 (Apple Git-50)
 
 
+<<<<<<< HEAD
+From bbdb653ef1690b7abc1bfe1d01ec2c2e639e7de1 Mon Sep 17 00:00:00 2001
+=======
 From 83c9769405ff71f262a4520357c4762af267b590 Mon Sep 17 00:00:00 2001
+>>>>>>> 9d49662c31ee81e782df1181069c8fb75446a562
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Thu, 15 Jan 2015 20:42:47 +0700
 Subject: [PATCH 4/4] Telephony: remove Video Call settings
