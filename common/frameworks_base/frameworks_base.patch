@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-From e2998e3b3b11fcf6c9fcdfc792a43a53322cfd3c Mon Sep 17 00:00:00 2001
-=======
-From dd4ec27a8ce188bbc3e48ffcc9481a23205e5558 Mon Sep 17 00:00:00 2001
->>>>>>> 9d49662c31ee81e782df1181069c8fb75446a562
+From 506b21e1f09d4a5663fad8d049f67b94b583adff Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 15 Nov 2014 14:50:29 +0700
 Subject: [PATCH 1/3] TelephonyManager: set properties in Broadcom-style as
@@ -121,11 +117,7 @@ index b7b278f..62cfa05 100644
 1.9.3 (Apple Git-50)
 
 
-<<<<<<< HEAD
-From d0360a7fd5436c1ab80491634578d79abbe254ac Mon Sep 17 00:00:00 2001
-=======
-From 2055cc8423153e6aecf4457d48c75c6a3cca68dc Mon Sep 17 00:00:00 2001
->>>>>>> 9d49662c31ee81e782df1181069c8fb75446a562
+From 8e1acf6058d2330e98571d04ef60a3a15241288d Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 15 Nov 2014 22:33:16 +0700
 Subject: [PATCH 2/3] Camera: HACK: i9082: API hacks
@@ -185,11 +177,7 @@ index d461bca..a34a758 100644
 1.9.3 (Apple Git-50)
 
 
-<<<<<<< HEAD
-From 56a0f152a3f4f57cb7d8ee1a05a6e705ea77bfbf Mon Sep 17 00:00:00 2001
-=======
-From cd1badd922ce1dd451f90382944a24256e915edf Mon Sep 17 00:00:00 2001
->>>>>>> 9d49662c31ee81e782df1181069c8fb75446a562
+From 9582866dd1bb758f6c166efd6214ac806b2edace Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 21 Dec 2014 16:23:31 +0700
 Subject: [PATCH 3/3] PowerManagerService: only turn on button light when any

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-From 222b84a3a8e226b59dbd10d7b3d808ea5ae34b5b Mon Sep 17 00:00:00 2001
-=======
-From 099325896ef1acee5a80cc1b2a12f924db27975b Mon Sep 17 00:00:00 2001
->>>>>>> 9d49662c31ee81e782df1181069c8fb75446a562
+From 213a9b3e8b9f9ca2549d0906ef42281efc783f71 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 16 Nov 2014 08:55:55 +0700
 Subject: [PATCH] Settings: i9082: disable manual provisioning
@@ -15,11 +11,7 @@ Change-Id: I1096b349ccf60b05aa261289b6bc7127beffaca5
  1 file changed, 1 insertion(+), 7 deletions(-)
 
 diff --git a/src/com/android/settings/sim/SimSettings.java b/src/com/android/settings/sim/SimSettings.java
-<<<<<<< HEAD
 index dea58f1..349557b 100644
-=======
-index b0aa1ed..55d8e52 100644
->>>>>>> 9d49662c31ee81e782df1181069c8fb75446a562
 --- a/src/com/android/settings/sim/SimSettings.java
 +++ b/src/com/android/settings/sim/SimSettings.java
 @@ -165,19 +165,13 @@ public class SimSettings extends RestrictedSettingsFragment implements Indexable
