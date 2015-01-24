@@ -1,0 +1,57 @@
+From 60b17cbf5efd61bcb9b02a586a10c611f507869f Mon Sep 17 00:00:00 2001
+From: Pawit Pornkitprasan <p.pawit@gmail.com>
+Date: Fri, 23 Jan 2015 20:34:16 +0700
+Subject: [PATCH] Camera: i9082: disable preview after stopping camera
+
+This fixes a native crash from Broadcom's driver. However, there is
+an unwanted side effect of the preview going black while the
+'close application' animation is running.
+
+Change-Id: I231233d28a1f7ac914408a7d02100a9424c2bf1c
+---
+ src/com/android/camera/CameraActivity.java | 2 +-
+ src/com/android/camera/PhotoModule.java    | 1 +
+ src/com/android/camera/VideoModule.java    | 2 ++
+ 3 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/com/android/camera/CameraActivity.java b/src/com/android/camera/CameraActivity.java
+index 680b117..a50af7f 100644
+--- a/src/com/android/camera/CameraActivity.java
++++ b/src/com/android/camera/CameraActivity.java
+@@ -1566,7 +1566,7 @@ public class CameraActivity extends Activity
+         mCurrentModule.onPreviewVisibilityChanged(visibility);
+     }
+ 
+-    private void updatePreviewRendering(int visibility) {
++    /* package */ void updatePreviewRendering(int visibility) {
+         if (visibility == ModuleController.VISIBILITY_HIDDEN) {
+             mCameraAppUI.pausePreviewRendering();
+         } else {
+diff --git a/src/com/android/camera/PhotoModule.java b/src/com/android/camera/PhotoModule.java
+index 7544e8b..a8f165a 100644
+--- a/src/com/android/camera/PhotoModule.java
++++ b/src/com/android/camera/PhotoModule.java
+@@ -1895,6 +1895,7 @@ public class PhotoModule
+             mActivity.getCameraProvider().releaseCamera(mCameraDevice.getCameraId());
+             mCameraDevice = null;
+             setCameraState(PREVIEW_STOPPED);
++            mActivity.updatePreviewRendering(ModuleController.VISIBILITY_HIDDEN);
+             mFocusManager.onCameraReleased();
+         }
+     }
+diff --git a/src/com/android/camera/VideoModule.java b/src/com/android/camera/VideoModule.java
+index bb08242..1fb6bf7 100644
+--- a/src/com/android/camera/VideoModule.java
++++ b/src/com/android/camera/VideoModule.java
+@@ -997,6 +997,8 @@ public class VideoModule extends CameraModule
+         mCameraDevice.setZoomChangeListener(null);
+         mCameraDevice.setErrorCallback(null, null);
+         mActivity.getCameraProvider().releaseCamera(mCameraDevice.getCameraId());
++        mActivity.updatePreviewRendering(ModuleController.VISIBILITY_HIDDEN);
++
+         mCameraDevice = null;
+         mPreviewing = false;
+         mSnapshotInProgress = false;
+-- 
+1.9.3 (Apple Git-50)
+
