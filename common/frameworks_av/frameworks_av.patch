@@ -1,4 +1,4 @@
-From a71cfccb449646e0ab7bd99e901b111e89bdb647 Mon Sep 17 00:00:00 2001
+From 76a4ccd940393da36bdebfb6696d42cc8575df65 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Wed, 24 Apr 2013 11:37:19 +0700
 Subject: [PATCH 1/9] OMXCodec: Re-implement requires-flush-before-shutdown
@@ -30,7 +30,7 @@ index 773c80b..e10e1e9 100644
 1.9.3 (Apple Git-50)
 
 
-From b802cb0c005eae2f163b11cd564b8edc47624bc6 Mon Sep 17 00:00:00 2001
+From 18d992f9e0a694711ab8f3010403bede139dc3cb Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Tue, 17 Dec 2013 13:15:52 +0700
 Subject: [PATCH 2/9] OMXCodec: set default input buffer size
@@ -97,7 +97,7 @@ index e10e1e9..2c23ddd 100644
 1.9.3 (Apple Git-50)
 
 
-From d2fc02153c5d15ab68482477610bccb1d592bfae Mon Sep 17 00:00:00 2001
+From baeabd836dbc3aae3291ad37c5e9c0c4e1d4b34c Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Wed, 19 Nov 2014 20:33:58 +0700
 Subject: [PATCH 3/9] ACodec: skip port index checking on vc4 encoder
@@ -127,7 +127,7 @@ index e3c9aea..aca88f8 100644
 1.9.3 (Apple Git-50)
 
 
-From af55cdfe7c87b9e828de354b57d529d4418131e8 Mon Sep 17 00:00:00 2001
+From b1b99a3134cfc027499d2ed1e276ea1624f95c92 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 23 Nov 2014 17:27:20 +0700
 Subject: [PATCH 4/9] ACodec: Don't trust provided width/height when setting
@@ -165,7 +165,7 @@ index aca88f8..4c4a215 100644
 1.9.3 (Apple Git-50)
 
 
-From 700e03a948103f8efb6fa296b37b2c6b0a1d43f9 Mon Sep 17 00:00:00 2001
+From 923677a97086722d13f87de85f8afebb58f5639d Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Fri, 28 Nov 2014 21:07:59 +0700
 Subject: [PATCH 5/9] AudioFlinger: i9082: HACK: disable stereo record
@@ -180,10 +180,10 @@ Change-Id: I59236addc022186fa35bd3b3914f42709c2318de
  1 file changed, 6 insertions(+)
 
 diff --git a/services/audioflinger/AudioFlinger.cpp b/services/audioflinger/AudioFlinger.cpp
-index 0717e57..557e65a 100644
+index 2b883cc..c6654b2 100644
 --- a/services/audioflinger/AudioFlinger.cpp
 +++ b/services/audioflinger/AudioFlinger.cpp
-@@ -2234,6 +2234,12 @@ sp<AudioFlinger::RecordThread> AudioFlinger::openInput_l(audio_module_handle_t m
+@@ -2244,6 +2244,12 @@ sp<AudioFlinger::RecordThread> AudioFlinger::openInput_l(audio_module_handle_t m
      audio_config_t halconfig = *config;
      audio_hw_device_t *inHwHal = inHwDev->hwDevice();
      audio_stream_in_t *inStream = NULL;
@@ -200,7 +200,7 @@ index 0717e57..557e65a 100644
 1.9.3 (Apple Git-50)
 
 
-From 6ddeba49c696cac04397af9d7918f590085efb1d Mon Sep 17 00:00:00 2001
+From 9bddd7198c7f873315b79643f39a2d22ccf1973a Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Wed, 10 Dec 2014 17:38:10 +0700
 Subject: [PATCH 6/9] AudioFlinger: i9082: HACK: force audio to 48 KHz
@@ -215,10 +215,10 @@ Change-Id: I0113831464f2f64c26a9c93bba8fe6b8229b09b4
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/services/audioflinger/AudioFlinger.cpp b/services/audioflinger/AudioFlinger.cpp
-index 557e65a..3a3c16b 100644
+index c6654b2..e87bd8b 100644
 --- a/services/audioflinger/AudioFlinger.cpp
 +++ b/services/audioflinger/AudioFlinger.cpp
-@@ -2236,8 +2236,9 @@ sp<AudioFlinger::RecordThread> AudioFlinger::openInput_l(audio_module_handle_t m
+@@ -2246,8 +2246,9 @@ sp<AudioFlinger::RecordThread> AudioFlinger::openInput_l(audio_module_handle_t m
      audio_stream_in_t *inStream = NULL;
  
  #ifdef CAPRI_HWC
@@ -233,7 +233,7 @@ index 557e65a..3a3c16b 100644
 1.9.3 (Apple Git-50)
 
 
-From 76347f00c368ede2bfb97cb6cf88c65f0b9c90c8 Mon Sep 17 00:00:00 2001
+From 655f3eb2cd964be1d12a8d83d5d4a5f17a81000c Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Tue, 16 Dec 2014 21:12:22 +0700
 Subject: [PATCH 7/9] stagefright: i9082: don't allocate too many extra buffers
@@ -283,7 +283,7 @@ index 2c23ddd..e47f49e 100644
 1.9.3 (Apple Git-50)
 
 
-From 545f4e7aee39f44b3842bacdaed76aba14a7100d Mon Sep 17 00:00:00 2001
+From d46919b55c0f010d61bd2304bb93d52cf2cd7c7d Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 20 Dec 2014 19:09:59 +0700
 Subject: [PATCH 8/9] stagefright: CAPRI_HWC: fix for screen recording
@@ -338,7 +338,7 @@ index 8c22255..eaa20c9 100644
 1.9.3 (Apple Git-50)
 
 
-From 1d9eec8a13cdd7db5022fad582194b5c627a6606 Mon Sep 17 00:00:00 2001
+From 85378564b8eff2c90ba9d01330b1a2256490bdac Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 21 Dec 2014 15:25:33 +0700
 Subject: [PATCH 9/9] stagefright: CAPRI_HWC: fix for miracast
