@@ -1,4 +1,4 @@
-From d8e88bf0e15c65987c0acc74764b538d234a301a Mon Sep 17 00:00:00 2001
+From 9b929bd6adac99317547339b202a079d16683e41 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 15 Nov 2014 14:50:29 +0700
 Subject: [PATCH 1/3] TelephonyManager: set properties in Broadcom-style as
@@ -12,10 +12,10 @@ Change-Id: I475fdd164b3316720387fefb14a3e12fbc262b39
  1 file changed, 20 insertions(+), 49 deletions(-)
 
 diff --git a/telephony/java/android/telephony/TelephonyManager.java b/telephony/java/android/telephony/TelephonyManager.java
-index efe6edc..5972454 100644
+index a225539..e8a7aba 100644
 --- a/telephony/java/android/telephony/TelephonyManager.java
 +++ b/telephony/java/android/telephony/TelephonyManager.java
-@@ -2764,44 +2764,16 @@ public class TelephonyManager {
+@@ -2801,44 +2801,16 @@ public class TelephonyManager {
       * @hide
       */
      public static void setTelephonyProperty(String property, long subId, String value) {
@@ -65,7 +65,7 @@ index efe6edc..5972454 100644
      }
  
      /**
-@@ -2892,16 +2864,16 @@ public class TelephonyManager {
+@@ -2929,16 +2901,16 @@ public class TelephonyManager {
       * @hide
       */
      public static String getTelephonyProperty(String property, long subId, String defaultVal) {
@@ -90,7 +90,7 @@ index efe6edc..5972454 100644
      }
  
      /**
-@@ -2910,15 +2882,14 @@ public class TelephonyManager {
+@@ -2947,15 +2919,14 @@ public class TelephonyManager {
       * @hide
       */
      public static int getTelephonyProperty(String property, int slotId, int defaultVal) {
@@ -117,7 +117,7 @@ index efe6edc..5972454 100644
 1.9.3 (Apple Git-50)
 
 
-From d9490d86a8ea6fbeb5a985395ace00047008dd78 Mon Sep 17 00:00:00 2001
+From 05b7ea9335070c61bbb19154f631b08b68646861 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 15 Nov 2014 22:33:16 +0700
 Subject: [PATCH 2/3] Camera: HACK: i9082: API hacks
@@ -177,7 +177,7 @@ index d461bca..a34a758 100644
 1.9.3 (Apple Git-50)
 
 
-From 9a3b8c96692b451dc3de95a502314c129fa3ef56 Mon Sep 17 00:00:00 2001
+From 727a6efc4e281bed9cf20969a6e99cc75f374825 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 21 Dec 2014 16:23:31 +0700
 Subject: [PATCH 3/3] PowerManagerService: only turn on button light when any

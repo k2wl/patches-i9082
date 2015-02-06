@@ -1,9 +1,47 @@
-From c6197e093c71fa2fc1136be33ef6e7a6a827e5b9 Mon Sep 17 00:00:00 2001
+From f334a6d825df5e18f3475a0c8a84cc43d3e406bb Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
-Date: Sat, 24 Jan 2015 12:43:38 +0700
-Subject: [PATCH] Revert "Update Larger icons setting for better usability"
+Date: Sun, 1 Feb 2015 15:26:48 +0700
+Subject: [PATCH 1/2] Revert "DynamicGrid: tuning the icon size for some
+ device"
 
-Not working properly on hdpi. Revert while waiting for fix.
+This reverts commit edbea0af1226978b06d7f877ae435797d31419af.
+---
+ src/com/android/launcher3/DynamicGrid.java | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/src/com/android/launcher3/DynamicGrid.java b/src/com/android/launcher3/DynamicGrid.java
+index 779a5a6..1494311 100644
+--- a/src/com/android/launcher3/DynamicGrid.java
++++ b/src/com/android/launcher3/DynamicGrid.java
+@@ -87,15 +87,15 @@ public class DynamicGrid {
+                 (useLargeIcons ? 58 : 46), fourByFourDefaultLayout,
+                 R.xml.default_workspace_4x4_no_all_apps));
+         deviceProfiles.add(new DeviceProfile("Nexus 4",
+-                335, 567,  4, 4,  (useLargeIcons ? DEFAULT_ICON_SIZE_DP : 56), 13, (hasAA ? 5 : 5),
+-                (useLargeIcons ? 60 : 48), fourByFourDefaultLayout,
++                335, 567,  4, 4,  (useLargeIcons ? DEFAULT_ICON_SIZE_DP : 52), 13, (hasAA ? 5 : 5),
++                (useLargeIcons ? 60 : 46), fourByFourDefaultLayout,
+                 R.xml.default_workspace_4x4_no_all_apps));
+         deviceProfiles.add(new DeviceProfile("Nexus 5",
+-                359, 567,  4, 4,  (useLargeIcons ? DEFAULT_ICON_SIZE_DP : 56), 13, (hasAA ? 5 : 5),
+-                (useLargeIcons ? 60 : 48), fourByFourDefaultLayout,
++                359, 567,  4, 4,  (useLargeIcons ? DEFAULT_ICON_SIZE_DP : 52), 13, (hasAA ? 5 : 5),
++                (useLargeIcons ? 60 : 46), fourByFourDefaultLayout,
+                 R.xml.default_workspace_4x4_no_all_apps));
+         deviceProfiles.add(new DeviceProfile("Large Phone",
+-                406, 694,  5, 5,  (useLargeIcons ? 68 : 56), 14.4f,  5, (useLargeIcons ? 60 : 48),
++                406, 694,  5, 5,  (useLargeIcons ? 68 : 52), 14.4f,  5, (useLargeIcons ? 60 : 44),
+                 R.xml.default_workspace_5x5, R.xml.default_workspace_5x5_no_all_apps));
+         // The tablet profile is odd in that the landscape orientation
+         // also includes the nav bar on the side
+-- 
+1.9.3 (Apple Git-50)
+
+
+From 5aa1a04b0e86262f0b71715027e1dd0dbf0447e1 Mon Sep 17 00:00:00 2001
+From: Pawit Pornkitprasan <p.pawit@gmail.com>
+Date: Sun, 1 Feb 2015 15:26:50 +0700
+Subject: [PATCH 2/2] Revert "Update Larger icons setting for better usability"
 
 This reverts commit 5c7529006f3ed78d934fed2861cebd3654695108.
 ---
