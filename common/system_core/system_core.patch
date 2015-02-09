@@ -1,4 +1,4 @@
-From 73b9cc87994bb053b65c68751020806ea51ecfd1 Mon Sep 17 00:00:00 2001
+From 1e32c89de98fc4766234d3f73a20d6fbcbd1bf11 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Fri, 12 Apr 2013 11:40:15 +0700
 Subject: [PATCH] libnetutils: add ifc_set_mtu

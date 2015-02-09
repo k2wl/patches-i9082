@@ -1,4 +1,4 @@
-From 834198b8aaecbe6afa5817610c50579b3739cb42 Mon Sep 17 00:00:00 2001
+From b70e75d54700de53fc0d8a1393419d9113bb1b26 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Tue, 23 Dec 2014 22:15:37 +0700
 Subject: [PATCH 1/4] Telephony: fix 'up' navigation for SelectSubscription
@@ -66,7 +66,7 @@ index 0d43437..bb82fc1 100644
 1.9.3 (Apple Git-50)
 
 
-From cca9ca5c73c32b0d2f4b0e6fe9af4134900e5ebe Mon Sep 17 00:00:00 2001
+From b614313d8cfd2c2029a49c9638cdf5806ef95ccd Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 23 Nov 2014 15:57:20 +0700
 Subject: [PATCH 2/4] Telephony: MSim: enable preferred mode button for all
@@ -166,7 +166,7 @@ index 4bd2656..f34c30b 100644
 1.9.3 (Apple Git-50)
 
 
-From 0787d2689b8b89c984856329ddaf6507ddacb275 Mon Sep 17 00:00:00 2001
+From 7ff9c2051f15cb61604a0a07f89ef62110751f7c Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Tue, 23 Dec 2014 22:27:09 +0700
 Subject: [PATCH 3/4] Telephony: HACK: fix 'up' for MSimCallFeature sub option
@@ -202,7 +202,7 @@ index b130ff6..13737f6 100644
 1.9.3 (Apple Git-50)
 
 
-From b7d9a3e417e7d26053d011073d972b41d075eb7a Mon Sep 17 00:00:00 2001
+From a8d33b08aff7729667dd140160b7984cf2998c6a Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Thu, 15 Jan 2015 20:42:47 +0700
 Subject: [PATCH 4/4] Telephony: remove Video Call settings
