@@ -1,4 +1,4 @@
-From 078b4639183eed97ee92eb426aa4dc39ef29298d Mon Sep 17 00:00:00 2001
+From 5f99b56d27030b2db78f7bb36891335d973e65cf Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 15 Nov 2014 14:50:29 +0700
 Subject: [PATCH 1/5] TelephonyManager: set properties in Broadcom-style as
@@ -117,7 +117,7 @@ index a225539..e8a7aba 100644
 1.9.3 (Apple Git-50)
 
 
-From 78512333d1a873cb833de450cf3734126065862e Mon Sep 17 00:00:00 2001
+From 06c9e70f4f1135363e8f34cc385f3f57600070b0 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 15 Nov 2014 22:33:16 +0700
 Subject: [PATCH 2/5] Camera: HACK: i9082: API hacks
@@ -135,10 +135,10 @@ Change-Id: I929feffa4f79c69e9d7be7d1acacb3c228280bfe
  3 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/core/java/android/hardware/camera2/legacy/LegacyMetadataMapper.java b/core/java/android/hardware/camera2/legacy/LegacyMetadataMapper.java
-index 8376e7c..a1decec 100644
+index 03540e1..a4555e3 100644
 --- a/core/java/android/hardware/camera2/legacy/LegacyMetadataMapper.java
 +++ b/core/java/android/hardware/camera2/legacy/LegacyMetadataMapper.java
-@@ -1040,7 +1040,7 @@ public class LegacyMetadataMapper {
+@@ -1100,7 +1100,7 @@ public class LegacyMetadataMapper {
                  return CONTROL_AE_ANTIBANDING_MODE_OFF;
              }
              case Camera.Parameters.ANTIBANDING_50HZ: {
@@ -177,7 +177,7 @@ index d461bca..a34a758 100644
 1.9.3 (Apple Git-50)
 
 
-From 2f3722ea20ea7b0f31418fd4b5c43077f8fb5d74 Mon Sep 17 00:00:00 2001
+From ae9b2ceea973b942daf3f4cdea40fae45ebe80a5 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 21 Dec 2014 16:23:31 +0700
 Subject: [PATCH 3/5] PowerManagerService: only turn on button light when any
@@ -191,10 +191,10 @@ Change-Id: I6b15c45b713bcbc290a1026805c46109060f9990
  1 file changed, 7 insertions(+), 1 deletion(-)
 
 diff --git a/services/core/java/com/android/server/power/PowerManagerService.java b/services/core/java/com/android/server/power/PowerManagerService.java
-index 9ce2725..b2bc461 100644
+index 7a5ccb2..575ccb5 100644
 --- a/services/core/java/com/android/server/power/PowerManagerService.java
 +++ b/services/core/java/com/android/server/power/PowerManagerService.java
-@@ -240,6 +240,7 @@ public final class PowerManagerService extends SystemService
+@@ -241,6 +241,7 @@ public final class PowerManagerService extends SystemService
      // Timestamp of the last call to user activity.
      private long mLastUserActivityTime;
      private long mLastUserActivityTimeNoChangeLights;
@@ -202,7 +202,7 @@ index 9ce2725..b2bc461 100644
  
      // Timestamp of last interactive power hint.
      private long mLastInteractivePowerHintTime;
-@@ -1134,6 +1135,11 @@ public final class PowerManagerService extends SystemService
+@@ -1135,6 +1136,11 @@ public final class PowerManagerService extends SystemService
                      return true;
                  }
              } else {
@@ -214,7 +214,7 @@ index 9ce2725..b2bc461 100644
                  if (eventTime > mLastUserActivityTime) {
                      mLastUserActivityTime = eventTime;
                      mDirty |= DIRTY_USER_ACTIVITY;
-@@ -1634,7 +1640,7 @@ public final class PowerManagerService extends SystemService
+@@ -1635,7 +1641,7 @@ public final class PowerManagerService extends SystemService
                          }
  
                          mKeyboardLight.setBrightness(mKeyboardVisible ? keyboardBrightness : 0);
@@ -227,7 +227,7 @@ index 9ce2725..b2bc461 100644
 1.9.3 (Apple Git-50)
 
 
-From d46636b6137c52192829109567ff46cafb792521 Mon Sep 17 00:00:00 2001
+From af7209c0c26acfd4a13d778e06d4331245486307 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Fri, 6 Feb 2015 18:20:12 +0700
 Subject: [PATCH 4/5] Revert "Remove pointless notification drawer network info
@@ -263,10 +263,10 @@ index ad8b71f..b7e9a8b 100644
          layout="@layout/carrier_label"
          android:layout_height="@dimen/carrier_label_height"
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBar.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBar.java
-index fbeae5c..4652119 100644
+index d4e641d..dbcc348 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBar.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBar.java
-@@ -343,6 +343,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
+@@ -344,6 +344,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
  
      // carrier/wifi label
      private TextView mCarrierLabel;
@@ -274,7 +274,7 @@ index fbeae5c..4652119 100644
      private boolean mCarrierLabelVisible = false;
      private int mCarrierLabelHeight;
      private int mStatusBarHeaderHeight;
-@@ -1043,10 +1044,11 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
+@@ -1090,10 +1091,11 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
              mMSimNetworkController.addEmergencyLabelView(mHeader);
  
              mCarrierLabel = (TextView)mStatusBarWindowContent.findViewById(R.id.carrier_label);
@@ -287,7 +287,7 @@ index fbeae5c..4652119 100644
              if (mShowCarrierInPanel) {
                  mCarrierLabel.setVisibility(mCarrierLabelVisible ? View.VISIBLE : View.INVISIBLE);
  
-@@ -1057,6 +1059,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
+@@ -1104,6 +1106,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                  } else {
                      mMSimNetworkController.addCombinedLabelView(mCarrierLabel);
                  }
@@ -296,7 +296,7 @@ index fbeae5c..4652119 100644
                  // set up the dynamic hide/show of the label
                  //mPile.setOnSizeChangedListener(new OnSizeChangedListener() {
                  //    @Override
-@@ -1932,14 +1936,30 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
+@@ -1979,14 +1983,30 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
          final boolean emergencyCallsShownElsewhere = mContext.getResources().getBoolean(
                  R.bool.config_showEmergencyCallLabelOnly);
  
@@ -335,7 +335,7 @@ index fbeae5c..4652119 100644
  
          if (force || mCarrierLabelVisible != makeVisible) {
              mCarrierLabelVisible = makeVisible;
-@@ -3648,6 +3668,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
+@@ -3695,6 +3715,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
          mRecreating = true;
  
          if (mMSimNetworkController != null) {
@@ -344,10 +344,10 @@ index fbeae5c..4652119 100644
          } else if (mNetworkController != null) {
              mContext.unregisterReceiver(mNetworkController);
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/policy/MSimNetworkControllerImpl.java b/packages/SystemUI/src/com/android/systemui/statusbar/policy/MSimNetworkControllerImpl.java
-index 27eb9f1..32bd5da 100644
+index b390180..2cdcf55 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/policy/MSimNetworkControllerImpl.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/policy/MSimNetworkControllerImpl.java
-@@ -97,6 +97,7 @@ public class MSimNetworkControllerImpl extends NetworkControllerImpl {
+@@ -98,6 +98,7 @@ public class MSimNetworkControllerImpl extends NetworkControllerImpl {
      int mPhoneCount = 0;
      private SparseLongArray mPhoneIdSubIdMapping;
      ArrayList<MSimSignalCluster> mSimSignalClusters = new ArrayList<MSimSignalCluster>();
@@ -355,7 +355,7 @@ index 27eb9f1..32bd5da 100644
  
      public interface MSimSignalCluster {
          void setWifiIndicators(boolean visible, int strengthIcon, int activityIcon,
-@@ -432,6 +433,14 @@ public class MSimNetworkControllerImpl extends NetworkControllerImpl {
+@@ -437,6 +438,14 @@ public class MSimNetworkControllerImpl extends NetworkControllerImpl {
          }
      }
  
@@ -370,7 +370,7 @@ index 27eb9f1..32bd5da 100644
      private void updateCarrierText(int sub) {
          int textResId = 0;
          if (mAirplaneMode) {
-@@ -481,10 +490,17 @@ public class MSimNetworkControllerImpl extends NetworkControllerImpl {
+@@ -486,10 +495,17 @@ public class MSimNetworkControllerImpl extends NetworkControllerImpl {
              carrierName = carrierName + "    " + mCarrierTextSub[i];
          }
  
@@ -396,7 +396,7 @@ index 27eb9f1..32bd5da 100644
 1.9.3 (Apple Git-50)
 
 
-From bd472464ed271e8747044bc3425cc1bdcf54dcd5 Mon Sep 17 00:00:00 2001
+From e523fb57c8b28ed6454e00bd26891b6593ce7d0b Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 7 Feb 2015 22:52:44 +0700
 Subject: [PATCH 5/5] Revert "Msim: Use SIM display name"
@@ -410,7 +410,7 @@ This reverts commit 5220513d5a76689f723b2f3e8a412ec3251b0168.
  1 file changed, 7 insertions(+), 10 deletions(-)
 
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/policy/MSimNetworkControllerImpl.java b/packages/SystemUI/src/com/android/systemui/statusbar/policy/MSimNetworkControllerImpl.java
-index 32bd5da..8557ca1 100644
+index 2cdcf55..d6b48f6 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/policy/MSimNetworkControllerImpl.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/policy/MSimNetworkControllerImpl.java
 @@ -35,7 +35,6 @@ import android.telephony.SubInfoRecord;
@@ -429,7 +429,7 @@ index 32bd5da..8557ca1 100644
  
  public class MSimNetworkControllerImpl extends NetworkControllerImpl {
      // debug
-@@ -95,7 +95,7 @@ public class MSimNetworkControllerImpl extends NetworkControllerImpl {
+@@ -96,7 +96,7 @@ public class MSimNetworkControllerImpl extends NetworkControllerImpl {
      String[] mSpn;
      String[] mPlmn;
      int mPhoneCount = 0;
@@ -438,7 +438,7 @@ index 32bd5da..8557ca1 100644
      ArrayList<MSimSignalCluster> mSimSignalClusters = new ArrayList<MSimSignalCluster>();
      ArrayList<TextView> mSubsLabelViews = new ArrayList<TextView>();
  
-@@ -217,7 +217,7 @@ public class MSimNetworkControllerImpl extends NetworkControllerImpl {
+@@ -219,7 +219,7 @@ public class MSimNetworkControllerImpl extends NetworkControllerImpl {
      protected void registerPhoneStateListener(Context context) {
          // telephony
          mPhone = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
@@ -447,7 +447,7 @@ index 32bd5da..8557ca1 100644
          mPhoneCount = TelephonyManager.getDefault().getPhoneCount();
          Slog.d(TAG, "registerPhoneStateListener: " + mPhoneCount);
          mMSimPhoneStateListener = new PhoneStateListener[mPhoneCount];
-@@ -228,8 +228,9 @@ public class MSimNetworkControllerImpl extends NetworkControllerImpl {
+@@ -230,8 +230,9 @@ public class MSimNetworkControllerImpl extends NetworkControllerImpl {
                  Slog.d(TAG, "registerPhoneStateListener subId: " + subId);
                  Slog.d(TAG, "registerPhoneStateListener slotId: " + i);
                  if (subId > 0) {
@@ -459,7 +459,7 @@ index 32bd5da..8557ca1 100644
                      mPhone.listen(mMSimPhoneStateListener[i],
                              PhoneStateListener.LISTEN_SERVICE_STATE
                                      | PhoneStateListener.LISTEN_SIGNAL_STRENGTHS
-@@ -965,11 +966,7 @@ public class MSimNetworkControllerImpl extends NetworkControllerImpl {
+@@ -976,11 +977,7 @@ public class MSimNetworkControllerImpl extends NetworkControllerImpl {
                  something = true;
              }
          }

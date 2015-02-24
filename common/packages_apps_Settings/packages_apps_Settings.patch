@@ -1,4 +1,4 @@
-From 42160ea5b8b5cecef07bd38cda5a7eeb6e1bf2d4 Mon Sep 17 00:00:00 2001
+From 945729bfb28437bc86d16c2f84bdff2c71486f29 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 16 Nov 2014 08:55:55 +0700
 Subject: [PATCH] Settings: i9082: disable manual provisioning
@@ -7,23 +7,24 @@ Does not work here
 
 Change-Id: I1096b349ccf60b05aa261289b6bc7127beffaca5
 ---
- src/com/android/settings/sim/MultiSimEnablerPreference.java | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ src/com/android/settings/sim/MultiSimEnablerPreference.java | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/src/com/android/settings/sim/MultiSimEnablerPreference.java b/src/com/android/settings/sim/MultiSimEnablerPreference.java
-index a20f745..c2f3a3c 100644
+index 28e60dc..62d48f0 100644
 --- a/src/com/android/settings/sim/MultiSimEnablerPreference.java
 +++ b/src/com/android/settings/sim/MultiSimEnablerPreference.java
-@@ -108,7 +108,8 @@ public class MultiSimEnablerPreference extends Preference implements OnCheckedCh
-         super(context, attrs, defStyle);
-         mContext = context;
-         setWidgetLayoutResource(R.layout.custom_checkbox);
--        setSwitchVisibility(View.VISIBLE);
-+        // Disable manual provisioning
-+        setSwitchVisibility(View.INVISIBLE);
-     }
+@@ -189,7 +189,9 @@ public class MultiSimEnablerPreference extends SwitchPreference implements
+         super.onBindView(view);
  
-     public MultiSimEnablerPreference(Context context, SubInfoRecord sir, Handler handler,
+         mSwitch = (Switch) view.findViewById(com.android.internal.R.id.switchWidget);
+-        mSwitch.setClickable(true);
++        // Disable manual provisioning
++        mSwitch.setClickable(false);
++        mSwitch.setVisibility(View.INVISIBLE);
+ 
+         update();
+     }
 -- 
 1.9.3 (Apple Git-50)
 
