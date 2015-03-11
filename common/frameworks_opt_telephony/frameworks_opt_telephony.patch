@@ -1,4 +1,4 @@
-From c6618cae1714ca4e9c5b1ebdb9bb1c40505f8b0f Mon Sep 17 00:00:00 2001
+From 10298bb22fafe27cb0c54b93ae1c0014f23c3446 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 31 May 2014 12:34:56 +0700
 Subject: [PATCH 1/2] telephony: support for RIL that does not send
@@ -65,10 +65,10 @@ index 5c70922..f4888ee 100644
          pw.println(" mCallRingDelay=" + mCallRingDelay);
          pw.println(" mIsTheCurrentActivePhone=" + mIsTheCurrentActivePhone);
 -- 
-1.9.3 (Apple Git-50)
+1.9.5 (Apple Git-50.3)
 
 
-From a0e139bd9ec947c5c9575a0f9e06a67be9016401 Mon Sep 17 00:00:00 2001
+From 00b41271995a7309e1f38416e6e5ddd19c0b25ed Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 15 Nov 2014 17:39:50 +0700
 Subject: [PATCH 2/2] telephony: RIL: i9082: set correct rild names
@@ -92,5 +92,5 @@ index 8775282..5e96097 100644
      static final int SOCKET_OPEN_RETRY_MILLIS = 4 * 1000;
  
 -- 
-1.9.3 (Apple Git-50)
+1.9.5 (Apple Git-50.3)
 

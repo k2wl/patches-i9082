@@ -1,4 +1,4 @@
-From 945729bfb28437bc86d16c2f84bdff2c71486f29 Mon Sep 17 00:00:00 2001
+From 402137ba72a53a3a94a221b1c3e4d20af1a05b4a Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 16 Nov 2014 08:55:55 +0700
 Subject: [PATCH] Settings: i9082: disable manual provisioning
@@ -26,5 +26,5 @@ index 28e60dc..62d48f0 100644
          update();
      }
 -- 
-1.9.3 (Apple Git-50)
+1.9.5 (Apple Git-50.3)
 

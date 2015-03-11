@@ -1,4 +1,4 @@
-From 0c0ef72f2e51335094a4a1a0137192b08a532017 Mon Sep 17 00:00:00 2001
+From 8103f63b2519cb2237a8ad5c5c620fb27d88daf7 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Wed, 24 Apr 2013 11:37:19 +0700
 Subject: [PATCH 1/9] OMXCodec: Re-implement requires-flush-before-shutdown
@@ -13,7 +13,7 @@ Change-Id: I1beac06af8118dcf0c248b631bc8e6dbbab2c1d5
  1 file changed, 3 insertions(+)
 
 diff --git a/media/libstagefright/OMXCodec.cpp b/media/libstagefright/OMXCodec.cpp
-index 5b94181..64c06fd 100644
+index 55e3905..3495076 100644
 --- a/media/libstagefright/OMXCodec.cpp
 +++ b/media/libstagefright/OMXCodec.cpp
 @@ -372,6 +372,9 @@ uint32_t OMXCodec::getComponentQuirks(
@@ -27,10 +27,10 @@ index 5b94181..64c06fd 100644
          quirks |= kRequiresLoadedToIdleAfterAllocation;
      }
 -- 
-1.9.3 (Apple Git-50)
+1.9.5 (Apple Git-50.3)
 
 
-From 46df9bd4152b4117647d8d7731b6ccf22d8a16b2 Mon Sep 17 00:00:00 2001
+From e1f97ebb03bf434ae279047dc791dcc9585ed038 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Tue, 17 Dec 2013 13:15:52 +0700
 Subject: [PATCH 2/9] OMXCodec: set default input buffer size
@@ -71,7 +71,7 @@ index 17af82e..e481eec 100644
      CHECK_EQ(getPortFormat(kPortIndexInput, inputFormat), (status_t)OK);
      CHECK_EQ(getPortFormat(kPortIndexOutput, outputFormat), (status_t)OK);
 diff --git a/media/libstagefright/OMXCodec.cpp b/media/libstagefright/OMXCodec.cpp
-index 64c06fd..50b65d6 100644
+index 3495076..e16bdc5 100644
 --- a/media/libstagefright/OMXCodec.cpp
 +++ b/media/libstagefright/OMXCodec.cpp
 @@ -914,6 +914,18 @@ status_t OMXCodec::configureCodec(const sp<MetaData> &meta) {
@@ -94,10 +94,10 @@ index 64c06fd..50b65d6 100644
      initOutputFormat(meta);
  
 -- 
-1.9.3 (Apple Git-50)
+1.9.5 (Apple Git-50.3)
 
 
-From 850ce16ae47a61fc3f5deec00761ab26ce72d47c Mon Sep 17 00:00:00 2001
+From dcfd36194fb6d2a457bfc95ae976f0cb91d8a6c5 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Wed, 19 Nov 2014 20:33:58 +0700
 Subject: [PATCH 3/9] ACodec: skip port index checking on vc4 encoder
@@ -124,10 +124,10 @@ index e481eec..5125f6f 100644
              (int)(portIndex == kPortIndexOutput ? OMX_DirOutput : OMX_DirInput));
  
 -- 
-1.9.3 (Apple Git-50)
+1.9.5 (Apple Git-50.3)
 
 
-From 08ec6956a2da6f93a214633022ba9b7ec9497b79 Mon Sep 17 00:00:00 2001
+From 24df14a9802e486705c896e867f80c97e0e650c5 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 23 Nov 2014 17:27:20 +0700
 Subject: [PATCH 4/9] ACodec: Don't trust provided width/height when setting
@@ -162,10 +162,10 @@ index 5125f6f..581f43d 100644
  #endif
  
 -- 
-1.9.3 (Apple Git-50)
+1.9.5 (Apple Git-50.3)
 
 
-From 0cb7cbc450d6a07b793c85f8e28be51437415206 Mon Sep 17 00:00:00 2001
+From 4b283ebde70a2a969d97cc62ceaee5fb2e4978d6 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Fri, 28 Nov 2014 21:07:59 +0700
 Subject: [PATCH 5/9] AudioFlinger: i9082: HACK: disable stereo record
@@ -180,10 +180,10 @@ Change-Id: I59236addc022186fa35bd3b3914f42709c2318de
  1 file changed, 6 insertions(+)
 
 diff --git a/services/audioflinger/AudioFlinger.cpp b/services/audioflinger/AudioFlinger.cpp
-index dceb4db..9f402bd 100644
+index 0b2943c..fa3fbf1 100644
 --- a/services/audioflinger/AudioFlinger.cpp
 +++ b/services/audioflinger/AudioFlinger.cpp
-@@ -2244,6 +2244,12 @@ sp<AudioFlinger::RecordThread> AudioFlinger::openInput_l(audio_module_handle_t m
+@@ -2248,6 +2248,12 @@ sp<AudioFlinger::RecordThread> AudioFlinger::openInput_l(audio_module_handle_t m
      audio_config_t halconfig = *config;
      audio_hw_device_t *inHwHal = inHwDev->hwDevice();
      audio_stream_in_t *inStream = NULL;
@@ -197,10 +197,10 @@ index dceb4db..9f402bd 100644
                                          &inStream, flags, address.string(), source);
      ALOGV("openInput_l() openInputStream returned input %p, SamplingRate %d"
 -- 
-1.9.3 (Apple Git-50)
+1.9.5 (Apple Git-50.3)
 
 
-From 46670d87877d26846544d85aae512d68a1ba6ecc Mon Sep 17 00:00:00 2001
+From 07709ae8b1d3c223589aaef79e382cc1595cb2f2 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Wed, 10 Dec 2014 17:38:10 +0700
 Subject: [PATCH 6/9] AudioFlinger: i9082: HACK: force audio to 48 KHz
@@ -215,10 +215,10 @@ Change-Id: I0113831464f2f64c26a9c93bba8fe6b8229b09b4
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/services/audioflinger/AudioFlinger.cpp b/services/audioflinger/AudioFlinger.cpp
-index 9f402bd..ea08dcc 100644
+index fa3fbf1..f4c6a2a 100644
 --- a/services/audioflinger/AudioFlinger.cpp
 +++ b/services/audioflinger/AudioFlinger.cpp
-@@ -2246,8 +2246,9 @@ sp<AudioFlinger::RecordThread> AudioFlinger::openInput_l(audio_module_handle_t m
+@@ -2250,8 +2250,9 @@ sp<AudioFlinger::RecordThread> AudioFlinger::openInput_l(audio_module_handle_t m
      audio_stream_in_t *inStream = NULL;
  
  #ifdef CAPRI_HWC
@@ -230,10 +230,10 @@ index 9f402bd..ea08dcc 100644
  
      status_t status = inHwHal->open_input_stream(inHwHal, *input, device, &halconfig,
 -- 
-1.9.3 (Apple Git-50)
+1.9.5 (Apple Git-50.3)
 
 
-From 56b50b8bc62dd2c14ff706898fdbbb3950f2ef54 Mon Sep 17 00:00:00 2001
+From a37f1ba42cac2eb28801d331294120b2588e27d1 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Tue, 16 Dec 2014 21:12:22 +0700
 Subject: [PATCH 7/9] stagefright: i9082: don't allocate too many extra buffers
@@ -264,7 +264,7 @@ index 581f43d..b31e33f 100644
              def.nBufferCountMin + *minUndequeuedBuffers + extraBuffers;
          def.nBufferCountActual = newBufferCount;
 diff --git a/media/libstagefright/OMXCodec.cpp b/media/libstagefright/OMXCodec.cpp
-index 50b65d6..0d9a9f6 100644
+index e16bdc5..549badf 100644
 --- a/media/libstagefright/OMXCodec.cpp
 +++ b/media/libstagefright/OMXCodec.cpp
 @@ -2315,7 +2315,11 @@ status_t OMXCodec::allocateOutputBuffersFromNativeWindow() {
@@ -280,10 +280,10 @@ index 50b65d6..0d9a9f6 100644
              def.nBufferCountMin + minUndequeuedBufs + extraBuffers;
          def.nBufferCountActual = newBufferCount;
 -- 
-1.9.3 (Apple Git-50)
+1.9.5 (Apple Git-50.3)
 
 
-From 998a8a957fdda2390d5bebe51511342626e8234c Mon Sep 17 00:00:00 2001
+From 6fe32eadae9a53e4729fb9c72cd1a8f6e04d277d Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 20 Dec 2014 19:09:59 +0700
 Subject: [PATCH 8/9] stagefright: CAPRI_HWC: fix for screen recording
@@ -335,10 +335,10 @@ index 8c22255..eaa20c9 100644
  
      GraphicBufferSource* bufferSource = new GraphicBufferSource(
 -- 
-1.9.3 (Apple Git-50)
+1.9.5 (Apple Git-50.3)
 
 
-From cca04e249d57ef949b26bac821e253f7412ba47a Mon Sep 17 00:00:00 2001
+From 15ff9a6a7d1be2b6e33fa4ddc6cfc4e9566208a3 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 21 Dec 2014 15:25:33 +0700
 Subject: [PATCH 9/9] stagefright: CAPRI_HWC: fix for miracast
@@ -415,5 +415,5 @@ index b31e33f..11c4dce 100644
      float frameRate;
      if (!msg->findFloat("frame-rate", &frameRate)) {
 -- 
-1.9.3 (Apple Git-50)
+1.9.5 (Apple Git-50.3)
 

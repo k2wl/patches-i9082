@@ -1,4 +1,4 @@
-From 569ee6edd4c71c8c455aa380ac4c70ee59cff794 Mon Sep 17 00:00:00 2001
+From b7ba4acc95b0f8594ebc4625d1be4958bb3b8246 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Fri, 23 Jan 2015 20:34:16 +0700
 Subject: [PATCH 1/2] Camera: i9082: disable preview after stopping camera
@@ -53,10 +53,10 @@ index b16a63f..74c7c0b 100644
          mPreviewing = false;
          mSnapshotInProgress = false;
 -- 
-1.9.3 (Apple Git-50)
+1.9.5 (Apple Git-50.3)
 
 
-From a0d1c28a96936805dba854defcc13889897499ab Mon Sep 17 00:00:00 2001
+From 9046e4923447c987f518e3e54e3a9c068890cd16 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 24 Jan 2015 21:59:20 +0700
 Subject: [PATCH 2/2] Camera: i9082: update preview state after starting
@@ -110,5 +110,5 @@ index 74c7c0b..11e9ded 100644
              closeCamera();
              throw new RuntimeException("startPreview failed", ex);
 -- 
-1.9.3 (Apple Git-50)
+1.9.5 (Apple Git-50.3)
 
