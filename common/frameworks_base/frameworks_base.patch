@@ -1,4 +1,4 @@
-From 195892a1dd01cb1ce3377e1e241fe600fc5c70dd Mon Sep 17 00:00:00 2001
+From 168a64cf16895847fcf1c38eb8d8bf36bbbfdc4c Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 15 Nov 2014 14:50:29 +0700
 Subject: [PATCH 1/5] TelephonyManager: set properties in Broadcom-style as
@@ -117,7 +117,7 @@ index a225539..e8a7aba 100644
 1.9.5 (Apple Git-50.3)
 
 
-From 25b3332f8c4335824360956c70d6ab7cd1e1dee2 Mon Sep 17 00:00:00 2001
+From c00734f5cca762b48ce23517ff34888b3a54a138 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 15 Nov 2014 22:33:16 +0700
 Subject: [PATCH 2/5] Camera: HACK: i9082: API hacks
@@ -177,7 +177,7 @@ index d461bca..a34a758 100644
 1.9.5 (Apple Git-50.3)
 
 
-From 1601a5bbba0815d3631e6deb2c83f1a320ad824b Mon Sep 17 00:00:00 2001
+From 70a6a1d8c1949f0d90f59305a0802d5c7d014352 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 21 Dec 2014 16:23:31 +0700
 Subject: [PATCH 3/5] PowerManagerService: only turn on button light when any
@@ -227,7 +227,7 @@ index 7a5ccb2..575ccb5 100644
 1.9.5 (Apple Git-50.3)
 
 
-From 7d1a85b7266632fbac660089215b014be40e09b4 Mon Sep 17 00:00:00 2001
+From f454d093807e845d1ff1c756d1b0d0568e238cb2 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Fri, 6 Feb 2015 18:20:12 +0700
 Subject: [PATCH 4/5] Revert "Remove pointless notification drawer network info
@@ -263,7 +263,7 @@ index ad8b71f..b7e9a8b 100644
          layout="@layout/carrier_label"
          android:layout_height="@dimen/carrier_label_height"
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBar.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBar.java
-index 45d4bc5..380db3f 100644
+index f01701d..ebd6a18 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBar.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBar.java
 @@ -347,6 +347,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
@@ -274,7 +274,7 @@ index 45d4bc5..380db3f 100644
      private boolean mCarrierLabelVisible = false;
      private int mCarrierLabelHeight;
      private int mStatusBarHeaderHeight;
-@@ -1114,10 +1115,11 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
+@@ -1137,10 +1138,11 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
              mMSimNetworkController.addEmergencyLabelView(mHeader);
  
              mCarrierLabel = (TextView)mStatusBarWindowContent.findViewById(R.id.carrier_label);
@@ -287,7 +287,7 @@ index 45d4bc5..380db3f 100644
              if (mShowCarrierInPanel) {
                  mCarrierLabel.setVisibility(mCarrierLabelVisible ? View.VISIBLE : View.INVISIBLE);
  
-@@ -1128,6 +1130,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
+@@ -1151,6 +1153,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                  } else {
                      mMSimNetworkController.addCombinedLabelView(mCarrierLabel);
                  }
@@ -296,7 +296,7 @@ index 45d4bc5..380db3f 100644
                  // set up the dynamic hide/show of the label
                  //mPile.setOnSizeChangedListener(new OnSizeChangedListener() {
                  //    @Override
-@@ -2018,14 +2022,30 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
+@@ -2024,14 +2028,30 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
          final boolean emergencyCallsShownElsewhere = mContext.getResources().getBoolean(
                  R.bool.config_showEmergencyCallLabelOnly);
  
@@ -335,8 +335,8 @@ index 45d4bc5..380db3f 100644
  
          if (force || mCarrierLabelVisible != makeVisible) {
              mCarrierLabelVisible = makeVisible;
-@@ -3757,6 +3777,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
-         mRecreating = true;
+@@ -3788,6 +3808,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
+         instantCollapseNotificationPanel();
  
          if (mMSimNetworkController != null) {
 +            mMSimNetworkController.clearSubsLabelView();
@@ -396,7 +396,7 @@ index 36f333c..ca5d1dd 100644
 1.9.5 (Apple Git-50.3)
 
 
-From 1b5ac68a7d767a1da51e7b92c10fc6196301e6db Mon Sep 17 00:00:00 2001
+From 6c851bef1df7c97fbbf1db31e21df7a0127ce8dd Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 7 Feb 2015 22:52:44 +0700
 Subject: [PATCH 5/5] Revert "Msim: Use SIM display name"

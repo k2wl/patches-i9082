@@ -1,4 +1,4 @@
-From b7ba4acc95b0f8594ebc4625d1be4958bb3b8246 Mon Sep 17 00:00:00 2001
+From c91d9a064f5105cfc16af01838e54c0088283430 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Fri, 23 Jan 2015 20:34:16 +0700
 Subject: [PATCH 1/2] Camera: i9082: disable preview after stopping camera
@@ -56,7 +56,7 @@ index b16a63f..74c7c0b 100644
 1.9.5 (Apple Git-50.3)
 
 
-From 9046e4923447c987f518e3e54e3a9c068890cd16 Mon Sep 17 00:00:00 2001
+From 46a5ceb05c7528e07b6c340462d1e58ff63576bf Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 24 Jan 2015 21:59:20 +0700
 Subject: [PATCH 2/2] Camera: i9082: update preview state after starting
