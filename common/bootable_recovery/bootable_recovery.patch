@@ -1,4 +1,4 @@
-From 735a0c68bf352085d4f6eec0dabc07ea333b9b36 Mon Sep 17 00:00:00 2001
+From 3ee2ad18a553391c5af5bf3fa9d0a208a637643e Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Tue, 27 Jan 2015 22:29:39 +0700
 Subject: [PATCH] recovery: uncrypt: fix compatibility with CWM
