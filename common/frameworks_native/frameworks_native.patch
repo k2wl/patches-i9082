@@ -26,7 +26,7 @@ index dd04dcf..9ec2380 100644
  {
      return mCallingPid;
 -- 
-1.9.1
+2.3.5
 
 
 From 618836db92ebb800d870c190ce90795496c6be5e Mon Sep 17 00:00:00 2001
@@ -72,7 +72,7 @@ index e7589b1..b34ceb9 100644
  {
      // size
 -- 
-1.9.1
+2.3.5
 
 
 From 0325983656a05e1817ed12df3446cb851619375c Mon Sep 17 00:00:00 2001
@@ -101,7 +101,7 @@ index dfe5754..c608397 100644
      const uint32_t hw_w = hw->getWidth();
      const uint32_t hw_h = hw->getHeight();
 -- 
-1.9.1
+2.3.5
 
 
 From 476c6ee94d64c2469efcdb45a2c022e710dac35b Mon Sep 17 00:00:00 2001
@@ -131,7 +131,7 @@ index b6025f2..9c59ba2 100644
      producer->query(NATIVE_WINDOW_FORMAT,&format);
      if (format == PIXEL_FORMAT_RGBA_8888) {
 -- 
-1.9.1
+2.3.5
 
 
 From ff83dc2393d1fedc903b78aef1d6a56c990b086a Mon Sep 17 00:00:00 2001
@@ -162,5 +162,5 @@ index 6f76019..ff6a570 100644
                  BQ_LOGE("%s: min undequeued buffer count (%d) exceeded "
                          "(dequeued=%d undequeued=%d)",
 -- 
-1.9.1
+2.3.5
 

@@ -1,4 +1,4 @@
-From 2fec04b30574a10b9c46cfcda2550de078324ba3 Mon Sep 17 00:00:00 2001
+From b0d103c165e2c85b79694cfeff818232ddaa26fd Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Wed, 24 Apr 2013 11:37:19 +0700
 Subject: [PATCH 1/9] OMXCodec: Re-implement requires-flush-before-shutdown
@@ -13,7 +13,7 @@ Change-Id: I1beac06af8118dcf0c248b631bc8e6dbbab2c1d5
  1 file changed, 3 insertions(+)
 
 diff --git a/media/libstagefright/OMXCodec.cpp b/media/libstagefright/OMXCodec.cpp
-index f3452f2..387b1d0 100644
+index 4c1249f..afe4b5c 100644
 --- a/media/libstagefright/OMXCodec.cpp
 +++ b/media/libstagefright/OMXCodec.cpp
 @@ -410,6 +410,9 @@ uint32_t OMXCodec::getComponentQuirks(
@@ -27,10 +27,10 @@ index f3452f2..387b1d0 100644
          quirks |= kRequiresLoadedToIdleAfterAllocation;
      }
 -- 
-1.9.1
+2.3.5
 
 
-From e6da28d5fc09ff0fe44a8929ccf7b386ac19e839 Mon Sep 17 00:00:00 2001
+From 0c25c1742bedcb0b5424f1c4427ac79b039b295f Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Tue, 17 Dec 2013 13:15:52 +0700
 Subject: [PATCH 2/9] OMXCodec: set default input buffer size
@@ -47,7 +47,7 @@ Change-Id: I74372f3d821e41feb38b9bc0cca4ef56aa019493
  2 files changed, 24 insertions(+)
 
 diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
-index 7ee35d6..f720871 100644
+index 504e534..83af10b 100644
 --- a/media/libstagefright/ACodec.cpp
 +++ b/media/libstagefright/ACodec.cpp
 @@ -1913,6 +1913,18 @@ status_t ACodec::configureCodec(
@@ -70,7 +70,7 @@ index 7ee35d6..f720871 100644
      mBaseOutputFormat = outputFormat;
  
 diff --git a/media/libstagefright/OMXCodec.cpp b/media/libstagefright/OMXCodec.cpp
-index 387b1d0..2c49c00 100644
+index afe4b5c..37e8ed6 100644
 --- a/media/libstagefright/OMXCodec.cpp
 +++ b/media/libstagefright/OMXCodec.cpp
 @@ -957,6 +957,18 @@ status_t OMXCodec::configureCodec(const sp<MetaData> &meta) {
@@ -93,10 +93,10 @@ index 387b1d0..2c49c00 100644
      initOutputFormat(meta);
  
 -- 
-1.9.1
+2.3.5
 
 
-From dbfdf5de8fb3dad5d2d0b98a44e94c23bb988a02 Mon Sep 17 00:00:00 2001
+From ee48442534d7e6244340ef9df72ed88086f790a7 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Wed, 19 Nov 2014 20:33:58 +0700
 Subject: [PATCH 3/9] ACodec: skip port index checking on vc4 encoder
@@ -107,10 +107,10 @@ Change-Id: I3fe742a8ec4b7f9bc0c4e5f0825fd3b88965a95e
  1 file changed, 5 insertions(+)
 
 diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
-index f720871..973f5b2 100644
+index 83af10b..2fae7d0 100644
 --- a/media/libstagefright/ACodec.cpp
 +++ b/media/libstagefright/ACodec.cpp
-@@ -3744,6 +3744,11 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
+@@ -3746,6 +3746,11 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
                  mNode, OMX_IndexParamPortDefinition, &def, sizeof(def)),
               (status_t)OK);
  
@@ -123,10 +123,10 @@ index f720871..973f5b2 100644
              (int)(portIndex == kPortIndexOutput ? OMX_DirOutput : OMX_DirInput));
  
 -- 
-1.9.1
+2.3.5
 
 
-From f8854bde9005770530aff16c6a8d7fe4cff37380 Mon Sep 17 00:00:00 2001
+From 4357692a11d1166996bc052f3c9b5902dd8e0ab3 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 23 Nov 2014 17:27:20 +0700
 Subject: [PATCH 4/9] ACodec: Don't trust provided width/height when setting
@@ -140,7 +140,7 @@ Change-Id: I202b291a84d2f9a8c29aa2177ba52a0465f39deb
  1 file changed, 3 insertions(+), 7 deletions(-)
 
 diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
-index 973f5b2..d309985 100644
+index 2fae7d0..cd9a3e6 100644
 --- a/media/libstagefright/ACodec.cpp
 +++ b/media/libstagefright/ACodec.cpp
 @@ -1916,13 +1916,9 @@ status_t ACodec::configureCodec(
@@ -161,10 +161,10 @@ index 973f5b2..d309985 100644
  #endif
  
 -- 
-1.9.1
+2.3.5
 
 
-From b6e8740680b0dc1e609006bf0dc0514f110fa766 Mon Sep 17 00:00:00 2001
+From de376fd446da5c9199d847fca1e11e704a25786c Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Fri, 28 Nov 2014 21:07:59 +0700
 Subject: [PATCH 5/9] AudioFlinger: i9082: HACK: disable stereo record
@@ -196,10 +196,10 @@ index 25225b0..7da83ad 100644
                                          &inStream, flags, address.string(), source);
      ALOGV("openInput_l() openInputStream returned input %p, SamplingRate %d"
 -- 
-1.9.1
+2.3.5
 
 
-From f2a5b7551adf6d5fd365445b717cdf2b9a4bec15 Mon Sep 17 00:00:00 2001
+From f39c2c1ff338d6584ddf5539fde645fd74a7bc14 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Wed, 10 Dec 2014 17:38:10 +0700
 Subject: [PATCH 6/9] AudioFlinger: i9082: HACK: force audio to 48 KHz
@@ -229,10 +229,10 @@ index 7da83ad..484acfb 100644
  
      status_t status = inHwHal->open_input_stream(inHwHal, *input, device, &halconfig,
 -- 
-1.9.1
+2.3.5
 
 
-From 296f79f7913bd3d6d3ff1239e6349b97abe992c6 Mon Sep 17 00:00:00 2001
+From 1ebdb9fed71ae4c77099197cd729458041495de4 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Tue, 16 Dec 2014 21:12:22 +0700
 Subject: [PATCH 7/9] stagefright: i9082: don't allocate too many extra buffers
@@ -247,10 +247,10 @@ Change-Id: Idfe85f3cd77d6aa5422073857ceecec902e3ca68
  2 files changed, 8 insertions(+)
 
 diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
-index d309985..8b740d6 100644
+index cd9a3e6..b06a3ee 100644
 --- a/media/libstagefright/ACodec.cpp
 +++ b/media/libstagefright/ACodec.cpp
-@@ -836,7 +836,11 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(
+@@ -844,7 +844,11 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(
      // This check was present in KitKat.
      if (def.nBufferCountActual < def.nBufferCountMin + *minUndequeuedBuffers) {
  #endif
@@ -263,10 +263,10 @@ index d309985..8b740d6 100644
              def.nBufferCountMin + *minUndequeuedBuffers + extraBuffers;
          def.nBufferCountActual = newBufferCount;
 diff --git a/media/libstagefright/OMXCodec.cpp b/media/libstagefright/OMXCodec.cpp
-index 2c49c00..4d96c2c 100644
+index 37e8ed6..2fa70a8 100644
 --- a/media/libstagefright/OMXCodec.cpp
 +++ b/media/libstagefright/OMXCodec.cpp
-@@ -2373,7 +2373,11 @@ status_t OMXCodec::allocateOutputBuffersFromNativeWindow() {
+@@ -2377,7 +2377,11 @@ status_t OMXCodec::allocateOutputBuffersFromNativeWindow() {
      // This check was present in KitKat.
      if (def.nBufferCountActual < def.nBufferCountMin + minUndequeuedBufs) {
  #endif
@@ -279,10 +279,10 @@ index 2c49c00..4d96c2c 100644
              def.nBufferCountMin + minUndequeuedBufs + extraBuffers;
          def.nBufferCountActual = newBufferCount;
 -- 
-1.9.1
+2.3.5
 
 
-From c2dae735b6dbbbc1fbb15b37de04c0c3677de921 Mon Sep 17 00:00:00 2001
+From de58aa827aa84573f6818ffd17a99f49cc2cd366 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 20 Dec 2014 19:09:59 +0700
 Subject: [PATCH 8/9] stagefright: CAPRI_HWC: fix for screen recording
@@ -335,10 +335,10 @@ index e3a1bd3..07bf1b2 100644
  
      GraphicBufferSource* bufferSource = new GraphicBufferSource(
 -- 
-1.9.1
+2.3.5
 
 
-From 0e703a45613a62de8fc9b401fa4fb3ac4c1eecb6 Mon Sep 17 00:00:00 2001
+From fdf7044a05b3b4c3647d6d05ee32951ef18e99a5 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 21 Dec 2014 15:25:33 +0700
 Subject: [PATCH 9/9] stagefright: CAPRI_HWC: fix for miracast
@@ -351,7 +351,7 @@ Change-Id: I5f98f00406a6b28c1a2a1862fbcefa2fdd9055d6
  1 file changed, 12 insertions(+), 6 deletions(-)
 
 diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
-index 8b740d6..c570d9c 100644
+index b06a3ee..cac8865 100644
 --- a/media/libstagefright/ACodec.cpp
 +++ b/media/libstagefright/ACodec.cpp
 @@ -2893,7 +2893,13 @@ static OMX_U32 setPFramesSpacing(int32_t iFramesInterval, int32_t frameRate) {
@@ -415,5 +415,5 @@ index 8b740d6..c570d9c 100644
      float frameRate;
      if (!msg->findFloat("frame-rate", &frameRate)) {
 -- 
-1.9.1
+2.3.5
 
