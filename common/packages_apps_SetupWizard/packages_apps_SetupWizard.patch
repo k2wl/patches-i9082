@@ -1,46 +1,21 @@
-From 40a60f3f1dc70a19613d285f4e46e5a3f94b1ec7 Mon Sep 17 00:00:00 2001
+From 6d2dcdae2b4ad69529f0b1f822e9194c3a363a04 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 18 Apr 2015 11:40:43 +0700
-Subject: [PATCH 1/2] SetupWizard: don't access SubscriptionController directly
+Subject: [PATCH] SetupWizard: don't access SubscriptionController directly
 
 SubscriptionController exists in the telephony process and cannot
 be accessed by SetupWizard.
 
 getInstance() will always return null.
 ---
- Android.mk                                              |  3 ---
- .../setupwizard/setup/ChooseDataSimPage.java            | 10 +++-------
- .../cyanogenmod/setupwizard/util/SetupWizardUtils.java  | 17 ++++++-----------
- 3 files changed, 9 insertions(+), 21 deletions(-)
+ src/com/cyanogenmod/setupwizard/setup/ChooseDataSimPage.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/Android.mk b/Android.mk
-index aa8859d..3f1db8c 100644
---- a/Android.mk
-+++ b/Android.mk
-@@ -17,9 +17,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
-     play \
-     libphonenumber
- 
--LOCAL_JAVA_LIBRARIES := \
--    telephony-common
--
- # Include res dir from chips
- google_play_dir := ../../../external/google/google_play_services/libproject/google-play-services_lib/res
- res_dir := $(google_play_dir) res
 diff --git a/src/com/cyanogenmod/setupwizard/setup/ChooseDataSimPage.java b/src/com/cyanogenmod/setupwizard/setup/ChooseDataSimPage.java
-index c5aedc4..7c9542d 100644
+index 451b79e..0ed4c8b 100644
 --- a/src/com/cyanogenmod/setupwizard/setup/ChooseDataSimPage.java
 +++ b/src/com/cyanogenmod/setupwizard/setup/ChooseDataSimPage.java
-@@ -38,8 +38,6 @@ import android.widget.ImageView;
- import android.widget.ProgressBar;
- import android.widget.TextView;
- 
--import com.android.internal.telephony.SubscriptionController;
--
- import com.cyanogenmod.setupwizard.R;
- import com.cyanogenmod.setupwizard.SetupWizardApp;
- import com.cyanogenmod.setupwizard.cmstats.SetupStats;
-@@ -83,7 +81,7 @@ public class ChooseDataSimPage extends SetupPage {
+@@ -78,7 +78,7 @@ public class ChooseDataSimPage extends SetupPage {
      }
  
  
@@ -49,122 +24,6 @@ index c5aedc4..7c9542d 100644
  
          private ViewGroup mPageView;
          private ProgressBar mProgressBar;
-@@ -115,8 +113,7 @@ public class ChooseDataSimPage extends SetupPage {
-             public void onClick(View view) {
-                 SubscriptionInfo subInfoRecord = (SubscriptionInfo)view.getTag();
-                 if (subInfoRecord != null) {
--                    SubscriptionController.getInstance()
--                            .setDefaultDataSubId(subInfoRecord.getSubscriptionId());
-+                    mSubscriptionManager.setDefaultDataSubId(subInfoRecord.getSubscriptionId());
-                     setDataSubChecked(subInfoRecord);
-                 }
-             }
-@@ -126,8 +123,7 @@ public class ChooseDataSimPage extends SetupPage {
-         protected void initializePage() {
-             mPageView = (ViewGroup)mRootView.findViewById(R.id.page_view);
-             mProgressBar = (ProgressBar) mRootView.findViewById(R.id.progress);
--            List<SubscriptionInfo> subInfoRecords =  SubscriptionController
--                    .getInstance().getActiveSubscriptionInfoList();
-+            List<SubscriptionInfo> subInfoRecords = mSubscriptionManager.getActiveSubscriptionInfoList();
-             int simCount = subInfoRecords.size();
-             mSubInfoRecords = new SparseArray<SubscriptionInfo>(simCount);
-             for (int i = 0; i < simCount; i++) {
-diff --git a/src/com/cyanogenmod/setupwizard/util/SetupWizardUtils.java b/src/com/cyanogenmod/setupwizard/util/SetupWizardUtils.java
-index 1aeda14..d201080 100644
---- a/src/com/cyanogenmod/setupwizard/util/SetupWizardUtils.java
-+++ b/src/com/cyanogenmod/setupwizard/util/SetupWizardUtils.java
-@@ -32,8 +32,6 @@ import android.telephony.SubscriptionManager;
- import android.telephony.TelephonyManager;
- import android.util.Log;
- 
--import com.android.internal.telephony.SubscriptionController;
--
- import com.cyanogenmod.setupwizard.SetupWizardApp;
- 
- import com.google.android.gms.common.ConnectionResult;
-@@ -115,15 +113,12 @@ public class SetupWizardUtils {
-     public static boolean isSimMissing(Context context) {
-         TelephonyManager tm =
-                 (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
--        SubscriptionController subscriptionController = SubscriptionController.getInstance();
--        if (subscriptionController != null) {
--            int simCount = subscriptionController.getActiveSubInfoCount();
--            for (int i = 0; i < simCount; i++) {
--                int simState = tm.getSimState(i);
--                if (simState != TelephonyManager.SIM_STATE_ABSENT &&
--                        simState != TelephonyManager.SIM_STATE_UNKNOWN) {
--                    return false;
--                }
-+        int simCount = SubscriptionManager.from(context).getDefaultDataPhoneId();
-+        for (int i = 0; i < simCount; i++) {
-+            int simState = tm.getSimState(i);
-+            if (simState != TelephonyManager.SIM_STATE_ABSENT &&
-+                    simState != TelephonyManager.SIM_STATE_UNKNOWN) {
-+                return false;
-             }
-         }
-         return true;
--- 
-2.3.5
-
-
-From 109046e87fa41554821f1c8e4450b5bfebfb7b6c Mon Sep 17 00:00:00 2001
-From: Pawit Pornkitprasan <p.pawit@gmail.com>
-Date: Sat, 18 Apr 2015 11:48:46 +0700
-Subject: [PATCH 2/2] SetupWizard: handle skipping id in SubInfoRecords
-
-This extends I3b4132afccc96a5d08986a3cb902bd384931f21f to actually
-work.
----
- .../setupwizard/setup/ChooseDataSimPage.java            | 17 +++++++++--------
- 1 file changed, 9 insertions(+), 8 deletions(-)
-
-diff --git a/src/com/cyanogenmod/setupwizard/setup/ChooseDataSimPage.java b/src/com/cyanogenmod/setupwizard/setup/ChooseDataSimPage.java
-index 7c9542d..4db8f6c 100644
---- a/src/com/cyanogenmod/setupwizard/setup/ChooseDataSimPage.java
-+++ b/src/com/cyanogenmod/setupwizard/setup/ChooseDataSimPage.java
-@@ -137,16 +137,17 @@ public class ChooseDataSimPage extends SetupPage {
-             mSignalStrengths = new SparseArray<SignalStrength>(simCount);
-             mPhoneStateListeners = new SparseArray<PhoneStateListener>(simCount);
-             LayoutInflater inflater = LayoutInflater.from(getActivity());
--            for (int i = 0; i < simCount; i++) {
-+            for (int i = 0; i < mSubInfoRecords.size(); i++) {
-                 View simRow = inflater.inflate(R.layout.data_sim_row, null);
-                 mPageView.addView(simRow);
--                SubscriptionInfo subInfoRecord = mSubInfoRecords.get(i);
-+                SubscriptionInfo subInfoRecord = mSubInfoRecords.valueAt(i);
-                 simRow.setTag(subInfoRecord);
-                 simRow.setOnClickListener(mSetDataSimClickListener);
--                mNameViews.put(i, (TextView) simRow.findViewById(R.id.sim_title));
--                mSignalViews.put(i, (ImageView) simRow.findViewById(R.id.signal));
--                mCheckBoxes.put(i, (CheckBox) simRow.findViewById(R.id.enable_check));
--                mPhoneStateListeners.put(i, createPhoneStateListener(subInfoRecord));
-+                int slot = subInfoRecord.getSimSlotIndex();
-+                mNameViews.put(slot, (TextView) simRow.findViewById(R.id.sim_title));
-+                mSignalViews.put(slot, (ImageView) simRow.findViewById(R.id.signal));
-+                mCheckBoxes.put(slot, (CheckBox) simRow.findViewById(R.id.enable_check));
-+                mPhoneStateListeners.put(slot, createPhoneStateListener(subInfoRecord));
-                 mPageView.addView(inflater.inflate(R.layout.divider, null));
-             }
-             updateSignalStrengths();
-@@ -224,7 +225,7 @@ public class ChooseDataSimPage extends SetupPage {
-         private void updateSignalStrengths() {
-             if (mIsAttached) {
-                 for (int i = 0; i < mSubInfoRecords.size(); i++) {
--                    updateSignalStrength(mSubInfoRecords.get(i));
-+                    updateSignalStrength(mSubInfoRecords.valueAt(i));
-                 }
-             }
-         }
-@@ -248,7 +249,7 @@ public class ChooseDataSimPage extends SetupPage {
-         private void updateCurrentDataSub() {
-             if (mIsAttached) {
-                 for (int i = 0; i < mSubInfoRecords.size(); i++) {
--                    SubscriptionInfo subInfoRecord = mSubInfoRecords.get(i);
-+                    SubscriptionInfo subInfoRecord = mSubInfoRecords.valueAt(i);
-                     mCheckBoxes.get(i).setChecked(SubscriptionManager.getDefaultDataSubId()
-                             == subInfoRecord.getSimSlotIndex());
- 
 -- 
 2.3.5
 
