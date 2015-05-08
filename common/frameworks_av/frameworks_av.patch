@@ -1,4 +1,4 @@
-From 7b3a73083184ed879415a07242d17cba209710fe Mon Sep 17 00:00:00 2001
+From 289d290349a792f397346630e85653b656c5b7ac Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Wed, 24 Apr 2013 11:37:19 +0700
 Subject: [PATCH 1/9] OMXCodec: Re-implement requires-flush-before-shutdown
@@ -30,7 +30,7 @@ index 4c1249f..afe4b5c 100644
 2.3.5
 
 
-From 3e934c62601909bf87bf29672957fb5388cb6088 Mon Sep 17 00:00:00 2001
+From 4008d970a6c60170c34f7d135bdb969bc52ed6ae Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Tue, 17 Dec 2013 13:15:52 +0700
 Subject: [PATCH 2/9] OMXCodec: set default input buffer size
@@ -96,7 +96,7 @@ index afe4b5c..37e8ed6 100644
 2.3.5
 
 
-From 6dc42b502b4c8cf76377ef15a39315cbb6347677 Mon Sep 17 00:00:00 2001
+From ac2e3e93fddb3fe67063dcf4d1c7fc4ee18636f1 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Wed, 19 Nov 2014 20:33:58 +0700
 Subject: [PATCH 3/9] ACodec: skip port index checking on vc4 encoder
@@ -126,7 +126,7 @@ index b780128..1214eed 100644
 2.3.5
 
 
-From 24c117a94b58e9645dbf4770e3172e39016c2abe Mon Sep 17 00:00:00 2001
+From 9c172527c152d0279713f2b0a0c84dd4ef0ad7f0 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 23 Nov 2014 17:27:20 +0700
 Subject: [PATCH 4/9] ACodec: Don't trust provided width/height when setting
@@ -164,7 +164,7 @@ index 1214eed..7c94a75 100644
 2.3.5
 
 
-From 164327830397e40799e20df275ec4529c44fa22a Mon Sep 17 00:00:00 2001
+From e54104a4cf69f3dc0ea38d99c52325d9ed1eb309 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Fri, 28 Nov 2014 21:07:59 +0700
 Subject: [PATCH 5/9] AudioFlinger: i9082: HACK: disable stereo record
@@ -199,7 +199,7 @@ index 25225b0..7da83ad 100644
 2.3.5
 
 
-From 5298eb955cc03dfdf8f732978022d5032dc5bdfd Mon Sep 17 00:00:00 2001
+From 089cf6cfe45179b6ed35cce5ba3b3bdf57f5cabd Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Wed, 10 Dec 2014 17:38:10 +0700
 Subject: [PATCH 6/9] AudioFlinger: i9082: HACK: force audio to 48 KHz
@@ -232,7 +232,7 @@ index 7da83ad..484acfb 100644
 2.3.5
 
 
-From 9d11c8b9562c5c5f89e8a79b9c7418fc3b73b277 Mon Sep 17 00:00:00 2001
+From 65cd8e77080f632e56d72099fa243c5b07695a13 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Tue, 16 Dec 2014 21:12:22 +0700
 Subject: [PATCH 7/9] stagefright: i9082: don't allocate too many extra buffers
@@ -282,7 +282,7 @@ index 37e8ed6..2fa70a8 100644
 2.3.5
 
 
-From ccb871f133ed25c71d4b19ae8e8e8dcab26f083d Mon Sep 17 00:00:00 2001
+From 9ad09fc641d31136f32aafd63d76a477e1c419f2 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 20 Dec 2014 19:09:59 +0700
 Subject: [PATCH 8/9] stagefright: CAPRI_HWC: fix for screen recording
@@ -338,7 +338,7 @@ index e3a1bd3..07bf1b2 100644
 2.3.5
 
 
-From cf3cb70d94bd61903f31938a96cfbf26351136e2 Mon Sep 17 00:00:00 2001
+From 4c4eb3c3f68b3689e792f1ba8ee27850ba9b3f8c Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sun, 21 Dec 2014 15:25:33 +0700
 Subject: [PATCH 9/9] stagefright: CAPRI_HWC: fix for miracast

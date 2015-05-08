@@ -1,4 +1,4 @@
-From 120fe8f84aeab3773893bd921accaf1b629529bb Mon Sep 17 00:00:00 2001
+From 5a4572488163f88d7990595fd3ba4862cc002192 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Tue, 23 Dec 2014 22:27:09 +0700
 Subject: [PATCH 1/2] Telephony: HACK: fix 'up' for MSimCallFeature sub option
@@ -34,7 +34,7 @@ index 37bc515..8bb4da3 100644
 2.3.5
 
 
-From 8d380575d353cebf6e2c7c8a9405103023d870bb Mon Sep 17 00:00:00 2001
+From cbc8dba1979f3a905dc5b78d58d151ef5ff34dde Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Fri, 20 Feb 2015 20:26:52 +0700
 Subject: [PATCH 2/2] Telephony: HACK: enable WCDMA only setting
