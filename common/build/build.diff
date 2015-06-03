@@ -1,0 +1,2678 @@
+From 73d298ef3388b63261212b2e4252bf7b61dedd4a Mon Sep 17 00:00:00 2001
+From: Koushik Dutta <koushd@gmail.com>
+Date: Sat, 26 Jun 2010 22:53:55 -0700
+Subject: [PATCH 01/15] add support for overriding build.prop settings.
+
+Change-Id: Ie4224d608b7bcb0c2087bd77bc954f8f5f9b6495
+---
+ core/Makefile          | 1 +
+ core/product.mk        | 1 +
+ core/product_config.mk | 3 +++
+ 3 files changed, 5 insertions(+)
+
+diff --git a/core/Makefile b/core/Makefile
+index f0b1d56..ada0d32 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -210,6 +210,7 @@ endif
+ 			TARGET_CPU_ABI="$(TARGET_CPU_ABI)" \
+ 			TARGET_CPU_ABI2="$(TARGET_CPU_ABI2)" \
+ 			TARGET_AAPT_CHARACTERISTICS="$(TARGET_AAPT_CHARACTERISTICS)" \
++			$(PRODUCT_BUILD_PROP_OVERRIDES) \
+ 	        bash $(BUILDINFO_SH) >> $@
+ 	$(hide) $(foreach file,$(system_prop_file), \
+ 		if [ -f "$(file)" ]; then \
+diff --git a/core/product.mk b/core/product.mk
+index 46fad89..c450381 100644
+--- a/core/product.mk
++++ b/core/product.mk
+@@ -65,6 +65,7 @@ endef
+ #
+ 
+ _product_var_list := \
++    PRODUCT_BUILD_PROP_OVERRIDES \
+     PRODUCT_NAME \
+     PRODUCT_MODEL \
+     PRODUCT_LOCALES \
+diff --git a/core/product_config.mk b/core/product_config.mk
+index 5240ae7..a87d0c6 100644
+--- a/core/product_config.mk
++++ b/core/product_config.mk
+@@ -343,6 +343,9 @@ PRODUCT_PROPERTY_OVERRIDES := \
+ PRODUCT_DEFAULT_PROPERTY_OVERRIDES := \
+     $(strip $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_DEFAULT_PROPERTY_OVERRIDES))
+ 
++PRODUCT_BUILD_PROP_OVERRIDES := \
++	$(strip $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_BUILD_PROP_OVERRIDES))
++
+ # Should we use the default resources or add any product specific overlays
+ PRODUCT_PACKAGE_OVERLAYS := \
+     $(strip $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_PACKAGE_OVERLAYS))
+-- 
+2.1.4
+
+
+From a7cfa13f45c724a58cb4cdecf6b06918709f1a50 Mon Sep 17 00:00:00 2001
+From: Ricardo Cerqueira <github@cerqueira.org>
+Date: Wed, 11 Apr 2012 11:21:23 +0100
+Subject: [PATCH 02/15] build: Inline kernel building as a buildtime task
+
+Kernel image integration is now done in the build system. The
+"one true way" of doing this is to download the kernel source
+into kernel/TARGET_BOOTLOADER_NAME (by usage of the cm.dependencies
+mechanism or otherwise), and defining the TARGET_KERNEL_CONFIG
+variable in the device's BoardConfig makefile
+
+If the kernel's location doesn't match the automagic location
+(multi-device kernel source, for instance), TARGET_KERNEL_SOURCE
+can be used to specify a kernel path (i.e.,
+"TARGET_KERNEL_SOURCE := kernel/shared-whatever")
+
+If the device requires out-of-kernel-tree modules to be built,
+the TARGET_KERNEL_MODULES variable can be used, pointing to a
+_make target_ that will build and install such modules. Definition
+of such a target is the device author's responsibility, the only
+restriction is that it is a normal makefile recipe (example
+below)
+
+Optionally (or as an alternative), a prebuilt binary can also be
+defined at BoardConfig, by usage of the TARGET_PREBUILT_KERNEL
+variable. This binary will be used if the kernel source is absent
+(or undefined).
+
+A minimal BoardConfig.mk should look something like this:
+
+TARGET_KERNEL_CONFIG := cyanogenmod_<device>_defconfig
+TARGET_PREBUILT_KERNEL := device/<vendor>/<device>/kernel
+
+To include, for example, the TI WLAN modules, this can be used:
+
+-----------------------------
+TIWLAN_MODULES:
+       make -C hardware/ti/wlan/wl1283/platforms/os/linux/ KERNEL_DIR=$(KERNEL_OUT) ARCH="arm" CROSS_COMPILE="arm-eabi-" TNETW=1273 RANDOM_MAC=n REPORT_LOG=n
+       mv hardware/ti/wlan/wl1283/platforms/os/linux/tiwlan_drv.ko $(KERNEL_MODULES_OUT)
+       make -C hardware/ti/wlan/wl1283_softAP/platforms/os/linux/ KERNEL_DIR=$(KERNEL_OUT) ARCH="arm" CROSS_COMPILE="arm-eabi-" TNETW=1273 REPORT_LOG=n
+       mv hardware/ti/wlan/wl1283_softAP/platforms/os/linux/tiap_drv.ko $(KERNEL_MODULES_OUT)
+
+TARGET_KERNEL_MODULES := TIWLAN_MODULES
+---------------------------
+
+Change-Id: I8634fa4c788a42dc6f62e62ca170825b66db126a
+
+build: Fix kernel module building on Darwin/OSX
+
+Darwin/OSX build host does not have module-init-tools which is
+required to generated modules.dep file. Switch to modules.order
+file marker which is always generated instead.
+
+Change-Id: I20c0fccd905fa668202c3e7284a8778db3728a65
+
+kernel: Change path to kernel/<vendor>/<device>
+
+Derive the kernel path from the device's own path (just replace "device"
+with "kernel")
+
+Change-Id: Idd44a0489e1ce280adf5ec4d9cfe2385c75dd115
+
+kernel: Improve support for non-arm architectures
+
+Remove hardwired references to the ARM arch and toolchains, and replace
+them with the respective android build variables
+
+Change-Id: Iae3eb548ca1d58ac808b5fa430d415283a809106
+
+kernel: Fix ARM building
+
+The default android ARM compiler, arm-androideabi-, does NOT work
+for the Linux kernel. Special-case the ARM architecture to target
+the ARM_EABI_TOOLCHAIN path directly
+
+Change-Id: Ib672c99f114cb89d5fda3343d4dc68810d042d35
+
+kernel: allow TARGET_KERNEL_MODULES to overwrite kernel modules
+
+This is necessary to use compat-wireless since it needs to build a newer
+version of cfg80211 (and sometimes mac80211) than the kernel sources version.
+There are probably other instances of this type of need.
+
+Change-Id: Ib5bf818286bc20987d8b9f9480a43f3e7690e239
+
+kernel.mk: make use of ccache when requested
+
+Change-Id: I9b6e28711bd5f590a76ac2b62a50b1d2de014e3e
+
+kernel: Fix ccache inclusion logic
+
+Builds were broken when CCACHE was missing from the environment
+Change-Id: Ie8d6048f4600f1dc9c298593a50e37af04b96438
+
+build: show accurate information on inline kernel warnings/errors
+
+Having the variables on AndroidBoard as suggested causes errors
+with mm/mmm, whereas having them on BoardConfig doesn't. Adjust
+the warnings to reflect this.
+
+Change-Id: I554c1f1073df678d36521f73bc236a1f4b02212e
+
+This is causing generic_armv5-userdebug builds to fail. Commenting out for now to fix recovery build servers. Will fix properly later.
+
+Change-Id: Ibe1cda8cd2b4c1914dfa3b8a29724c9069e047a6
+
+kernel.mk: Also search PRODUCT_COPY_FILES for the kernel copy, as that is how AOSP does it now.
+
+Change-Id: Id2d1cf079694d1996d4a85d8435c2e4562e5d444
+
+kernel.mk: fix compiled kernel copy
+
+Change-Id: Ifb2a3d4968e56eed236eaa2db9258cd0b8865fda
+
+kernel.mk: workaround to fix kernel builds on darwin until the prebuilts/gcc is checked in by upstream.
+
+Change-Id: I6321fb7f6814b207c821d974766d945351b3f546
+
+build: fix ccache usage when building kernels
+
+Change-Id: Id4edd4d85d9ba3ef42575f5fdebf22ed14957a99
+
+kernel.mk: set KERNEL_OUT properly
+
+It was hardcoded to $(ANDROID_BUILD_TOP)/$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ
+which wouldn't exist if OUT_DIR_COMMON_BASE was set to use another dir
+(e.g. ramdisk)
+
+Fix it so that it now points to $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ
+if OUT_DIR is not out
+
+Change-Id: I1bf767d86548e41270d9cbb8f0c00512708501c5
+
+build: add support for uncompressed kernels
+
+build: kernel: remove hard coded darwin toolchain.
+
+* Use latest kernel toolchain from $(ARM_EABI_TOOLCHAIN) variable.
+
+Change-Id: I3b43408937dd5f193fcba19c034f868272de8963
+
+envsetup: set OUT_DIR to an absolute path always
+
+OUT_DIR was set to $(TOPDIR)out previously,
+but $(TOPDIR) was null, so it was a relative path.
+This broke releasetools, inline kernel building, etc
+since they require absolute paths.
+Fix it so that it is set to $(shell readlink -f .)/out
+if $(TOPDIR) is null.
+
+Also remove hacks which checked if (OUT_DIR) was out
+and changed it to $(ANDROID_BUILD_TOP)/out to workaround
+the aforementioned problem.
+
+Change-Id: I459a3b1325a1bbea0565cd73f6acf160d4ed9b39
+
+build: add strip on kernel modules
+
+kernel modules are huge for prima wlan and we need to strip them
+unstriped size 40mb
+striped size 2mb
+
+Change-Id: Iefd572732cad0a6f608439618673068a3586fcd5
+
+kernel: Ignore errors with module building
+
+Let kernel fully disable loadable modules
+
+Change-Id: Ia37ec927b092c041ee4c68bf9fd0f28b7339c8ca
+
+build: Add support for extra kernel build variables
+
+ * This allows specifying a variant defconfig, and an selinux defconfig
+   which are simply configuration fragments.
+
+Change-Id: I97882ae3b8c2e16ff6a7dce8dd3a70d70f8aa866
+
+s/cyanogenmod.com/cyanogenmod.org/
+
+* And fixup a wiki link while I'm at it.
+
+Change-Id: I0355b9a47eac1becc07e81659fbb2d11b14ece36
+
+Fixes for Xcode 5 and OSX 10.9.
+kernel.mk: Put elf.h into the include path on Darwin builds.
+
+Change-Id: I7069b956965d27caac3b2e4c3cc2e8b4c1da7a82
+
+Make the kernel image format parametric instead of a chain of if/elses
+
+Change-Id: I54bfcdecb8647f7bcf744e72b2de19fcf4e4e7ac
+
+build: Add "dtbs" target when building the kernel
+
+ * This is needed for 3.10
+
+Change-Id: I4044ea9e67017452efc25097a3327141a6627c24
+---
+ core/tasks/kernel.mk | 188 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 188 insertions(+)
+ create mode 100644 core/tasks/kernel.mk
+
+diff --git a/core/tasks/kernel.mk b/core/tasks/kernel.mk
+new file mode 100644
+index 0000000..4d519a0
+--- /dev/null
++++ b/core/tasks/kernel.mk
+@@ -0,0 +1,188 @@
++# Copyright (C) 2012 The CyanogenMod Project
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#      http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++# Android makefile to build kernel as a part of Android Build
++
++TARGET_AUTO_KDIR := $(shell echo $(TARGET_DEVICE_DIR) | sed -e 's/^device/kernel/g')
++
++## Externally influenced variables
++# kernel location - optional, defaults to kernel/<vendor>/<device>
++TARGET_KERNEL_SOURCE ?= $(TARGET_AUTO_KDIR)
++KERNEL_SRC := $(TARGET_KERNEL_SOURCE)
++# kernel configuration - mandatory
++KERNEL_DEFCONFIG := $(TARGET_KERNEL_CONFIG)
++VARIANT_DEFCONFIG := $(TARGET_KERNEL_VARIANT_CONFIG)
++SELINUX_DEFCONFIG := $(TARGET_KERNEL_SELINUX_CONFIG)
++
++## Internal variables
++KERNEL_OUT := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ
++KERNEL_CONFIG := $(KERNEL_OUT)/.config
++
++ifneq ($(BOARD_KERNEL_IMAGE_NAME),)
++	TARGET_PREBUILT_INT_KERNEL_TYPE := $(BOARD_KERNEL_IMAGE_NAME)
++	TARGET_PREBUILT_INT_KERNEL := $(KERNEL_OUT)/arch/$(TARGET_ARCH)/boot/$(TARGET_PREBUILT_INT_KERNEL_TYPE)
++else
++	TARGET_PREBUILT_INT_KERNEL := $(KERNEL_OUT)/arch/$(TARGET_ARCH)/boot/zImage
++	TARGET_PREBUILT_INT_KERNEL_TYPE := zImage
++endif
++
++## Do be discontinued in a future version. Notify builder about target
++## kernel format requirement
++ifeq ($(BOARD_KERNEL_IMAGE_NAME),)
++ifeq ($(BOARD_USES_UBOOT),true)
++        $(error "Please set BOARD_KERNEL_IMAGE_NAME to uImage")
++else ifeq ($(BOARD_USES_UNCOMPRESSED_BOOT),true)
++        $(error "Please set BOARD_KERNEL_IMAGE_NAME to Image")
++endif
++endif
++
++ifeq "$(wildcard $(KERNEL_SRC) )" ""
++    ifneq ($(TARGET_PREBUILT_KERNEL),)
++        HAS_PREBUILT_KERNEL := true
++        NEEDS_KERNEL_COPY := true
++    else
++        $(foreach cf,$(PRODUCT_COPY_FILES), \
++            $(eval _src := $(call word-colon,1,$(cf))) \
++            $(eval _dest := $(call word-colon,2,$(cf))) \
++            $(ifeq kernel,$(_dest), \
++                $(eval HAS_PREBUILT_KERNEL := true)))
++    endif
++
++    ifneq ($(HAS_PREBUILT_KERNEL),)
++        $(warning ***************************************************************)
++        $(warning * Using prebuilt kernel binary instead of source              *)
++        $(warning * THIS IS DEPRECATED, AND WILL BE DISCONTINUED                *)
++        $(warning * Please configure your device to download the kernel         *)
++        $(warning * source repository to $(KERNEL_SRC))
++        $(warning * See http://wiki.cyanogenmod.org/w/Doc:_integrated_kernel_building)
++        $(warning * for more information                                        *)
++        $(warning ***************************************************************)
++        FULL_KERNEL_BUILD := false
++        KERNEL_BIN := $(TARGET_PREBUILT_KERNEL)
++    else
++        $(warning ***************************************************************)
++        $(warning *                                                             *)
++        $(warning * No kernel source found, and no fallback prebuilt defined.   *)
++        $(warning * Please make sure your device is properly configured to      *)
++        $(warning * download the kernel repository to $(KERNEL_SRC))
++        $(warning * and add the TARGET_KERNEL_CONFIG variable to BoardConfig.mk *)
++        $(warning *                                                             *)
++        $(warning * As an alternative, define the TARGET_PREBUILT_KERNEL        *)
++        $(warning * variable with the path to the prebuilt binary kernel image  *)
++        $(warning * in your BoardConfig.mk file                                 *)
++        $(warning *                                                             *)
++        $(warning ***************************************************************)
++        $(error "NO KERNEL")
++    endif
++else
++    NEEDS_KERNEL_COPY := true
++    ifeq ($(TARGET_KERNEL_CONFIG),)
++        $(warning **********************************************************)
++        $(warning * Kernel source found, but no configuration was defined  *)
++        $(warning * Please add the TARGET_KERNEL_CONFIG variable to your   *)
++        $(warning * BoardConfig.mk file                                    *)
++        $(warning **********************************************************)
++        # $(error "NO KERNEL CONFIG")
++    else
++        #$(info Kernel source found, building it)
++        FULL_KERNEL_BUILD := true
++        ifeq ($(TARGET_USES_UNCOMPRESSED_KERNEL),true)
++        $(info Using uncompressed kernel)
++            KERNEL_BIN := $(KERNEL_OUT)/piggy
++        else
++            KERNEL_BIN := $(TARGET_PREBUILT_INT_KERNEL)
++        endif
++    endif
++endif
++
++ifeq ($(FULL_KERNEL_BUILD),true)
++
++KERNEL_HEADERS_INSTALL := $(KERNEL_OUT)/usr
++KERNEL_MODULES_INSTALL := system
++KERNEL_MODULES_OUT := $(TARGET_OUT)/lib/modules
++
++define mv-modules
++    mdpath=`find $(KERNEL_MODULES_OUT) -type f -name modules.order`;\
++    if [ "$$mdpath" != "" ];then\
++        mpath=`dirname $$mdpath`;\
++        ko=`find $$mpath/kernel -type f -name *.ko`;\
++        for i in $$ko; do $(ARM_EABI_TOOLCHAIN)/arm-eabi-strip --strip-unneeded $$i;\
++        mv $$i $(KERNEL_MODULES_OUT)/; done;\
++    fi
++endef
++
++define clean-module-folder
++    mdpath=`find $(KERNEL_MODULES_OUT) -type f -name modules.order`;\
++    if [ "$$mdpath" != "" ];then\
++        mpath=`dirname $$mdpath`; rm -rf $$mpath;\
++    fi
++endef
++
++ifeq ($(TARGET_ARCH),arm)
++    ifneq ($(USE_CCACHE),)
++      ccache := $(ANDROID_BUILD_TOP)/prebuilts/misc/$(HOST_PREBUILT_TAG)/ccache/ccache
++      # Check that the executable is here.
++      ccache := $(strip $(wildcard $(ccache)))
++    endif
++    ARM_CROSS_COMPILE:=CROSS_COMPILE="$(ccache) $(ARM_EABI_TOOLCHAIN)/arm-eabi-"
++    ccache = 
++endif
++
++ifeq ($(HOST_OS),darwin)
++  MAKE_FLAGS := C_INCLUDE_PATH=$(ANDROID_BUILD_TOP)/external/elfutils/libelf
++endif
++
++ifeq ($(TARGET_KERNEL_MODULES),)
++    TARGET_KERNEL_MODULES := no-external-modules
++endif
++
++$(KERNEL_OUT):
++	mkdir -p $(KERNEL_OUT)
++	mkdir -p $(KERNEL_MODULES_OUT)
++
++$(KERNEL_CONFIG): $(KERNEL_OUT)
++	$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) VARIANT_DEFCONFIG=$(VARIANT_DEFCONFIG) SELINUX_DEFCONFIG=$(SELINUX_DEFCONFIG) $(KERNEL_DEFCONFIG)
++
++$(KERNEL_OUT)/piggy : $(TARGET_PREBUILT_INT_KERNEL)
++	$(hide) gunzip -c $(KERNEL_OUT)/arch/$(TARGET_ARCH)/boot/compressed/piggy.gzip > $(KERNEL_OUT)/piggy
++
++TARGET_KERNEL_BINARIES: $(KERNEL_OUT) $(KERNEL_CONFIG) $(KERNEL_HEADERS_INSTALL)
++	$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) $(TARGET_PREBUILT_INT_KERNEL_TYPE)
++	-$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) dtbs
++	-$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) modules
++	-$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) INSTALL_MOD_PATH=../../$(KERNEL_MODULES_INSTALL) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) modules_install
++	$(mv-modules)
++	$(clean-module-folder)
++
++$(TARGET_KERNEL_MODULES): TARGET_KERNEL_BINARIES
++
++$(TARGET_PREBUILT_INT_KERNEL): $(TARGET_KERNEL_MODULES)
++	$(mv-modules)
++	$(clean-module-folder)
++
++$(KERNEL_HEADERS_INSTALL): $(KERNEL_OUT) $(KERNEL_CONFIG)
++	$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) headers_install
++
++endif # FULL_KERNEL_BUILD
++
++## Install it
++
++ifeq ($(NEEDS_KERNEL_COPY),true)
++file := $(INSTALLED_KERNEL_TARGET)
++ALL_PREBUILT += $(file)
++$(file) : $(KERNEL_BIN) | $(ACP)
++	$(transform-prebuilt-to-target)
++
++ALL_PREBUILT += $(INSTALLED_KERNEL_TARGET)
++endif
+-- 
+2.1.4
+
+
+From 99f711e9eaa9309fd5523748576356bec7259278 Mon Sep 17 00:00:00 2001
+From: Chirayu Desai <chirayudesai1@gmail.com>
+Date: Sun, 9 Nov 2014 17:27:51 +0530
+Subject: [PATCH 03/15] Allow specifying kernel toolchain and prefix
+
+Change-Id: Ib75cfe772e073f2196455f3e3dfba247f6b3feff
+---
+ core/tasks/kernel.mk | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/core/tasks/kernel.mk b/core/tasks/kernel.mk
+index 4d519a0..b0ab1de 100644
+--- a/core/tasks/kernel.mk
++++ b/core/tasks/kernel.mk
+@@ -112,12 +112,19 @@ KERNEL_HEADERS_INSTALL := $(KERNEL_OUT)/usr
+ KERNEL_MODULES_INSTALL := system
+ KERNEL_MODULES_OUT := $(TARGET_OUT)/lib/modules
+ 
++ifeq ($(KERNEL_TOOLCHAIN),)
++KERNEL_TOOLCHAIN := $(ARM_EABI_TOOLCHAIN)
++endif
++ifeq ($(KERNEL_TOOLCHAIN_PREFIX),)
++KERNEL_TOOLCHAIN_PREFIX := arm-eabi-
++endif
++
+ define mv-modules
+     mdpath=`find $(KERNEL_MODULES_OUT) -type f -name modules.order`;\
+     if [ "$$mdpath" != "" ];then\
+         mpath=`dirname $$mdpath`;\
+         ko=`find $$mpath/kernel -type f -name *.ko`;\
+-        for i in $$ko; do $(ARM_EABI_TOOLCHAIN)/arm-eabi-strip --strip-unneeded $$i;\
++        for i in $$ko; do $(KERNEL_TOOLCHAIN)/$(KERNEL_TOOLCHAIN_PREFIX)strip --strip-unneeded $$i;\
+         mv $$i $(KERNEL_MODULES_OUT)/; done;\
+     fi
+ endef
+@@ -135,7 +142,7 @@ ifeq ($(TARGET_ARCH),arm)
+       # Check that the executable is here.
+       ccache := $(strip $(wildcard $(ccache)))
+     endif
+-    ARM_CROSS_COMPILE:=CROSS_COMPILE="$(ccache) $(ARM_EABI_TOOLCHAIN)/arm-eabi-"
++    ARM_CROSS_COMPILE:=CROSS_COMPILE="$(ccache) $(KERNEL_TOOLCHAIN)/$(KERNEL_TOOLCHAIN_PREFIX)"
+     ccache = 
+ endif
+ 
+-- 
+2.1.4
+
+
+From 409f9757d6fa9861a1c1719b08034f93d7c4e84a Mon Sep 17 00:00:00 2001
+From: Alvin Francis <nivlafx@gmail.com>
+Date: Mon, 1 Dec 2014 13:13:40 -0400
+Subject: [PATCH 04/15] Fix libelf path
+
+Fixes kernel build
+
+Change-Id: Ic6cdb1734d7b865491e8e61403d32db4acafe514
+Signed-off-by: Alvin Francis <nivlafx@gmail.com>
+---
+ core/tasks/kernel.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/tasks/kernel.mk b/core/tasks/kernel.mk
+index b0ab1de..e6be63a 100644
+--- a/core/tasks/kernel.mk
++++ b/core/tasks/kernel.mk
+@@ -147,7 +147,7 @@ ifeq ($(TARGET_ARCH),arm)
+ endif
+ 
+ ifeq ($(HOST_OS),darwin)
+-  MAKE_FLAGS := C_INCLUDE_PATH=$(ANDROID_BUILD_TOP)/external/elfutils/libelf
++  MAKE_FLAGS := C_INCLUDE_PATH=$(ANDROID_BUILD_TOP)/external/elfutils/0.153/libelf/
+ endif
+ 
+ ifeq ($(TARGET_KERNEL_MODULES),)
+-- 
+2.1.4
+
+
+From 4c5659ec60ea4bb8406d8d284b46eccce11320c2 Mon Sep 17 00:00:00 2001
+From: Steve Kondik <steve@cyngn.com>
+Date: Wed, 24 Dec 2014 03:18:54 -0800
+Subject: [PATCH 05/15] core: More flexible kernel configuration
+
+ * Allow various combinations of kernel vs. userspace architectures
+ * Get rid of various assumptions about everything being ARM or 32-bit
+ * This adds the following target flags:
+     TARGET_KERNEL_ARCH
+     TARGET_KERNEL_HEADER_ARCH
+     KERNEL_HEADER_DEFCONFIG
+     TARGET_KERNEL_CROSS_COMPILE_PREFIX
+
+Change-Id: If0bc202abd35c216ba3ea5707ffdb602526d8ed3
+---
+ core/tasks/kernel.mk | 130 +++++++++++++++++++++++++++++++++++++--------------
+ 1 file changed, 96 insertions(+), 34 deletions(-)
+
+diff --git a/core/tasks/kernel.mk b/core/tasks/kernel.mk
+index e6be63a..9f40eec 100644
+--- a/core/tasks/kernel.mk
++++ b/core/tasks/kernel.mk
+@@ -29,14 +29,50 @@ SELINUX_DEFCONFIG := $(TARGET_KERNEL_SELINUX_CONFIG)
+ KERNEL_OUT := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ
+ KERNEL_CONFIG := $(KERNEL_OUT)/.config
+ 
++TARGET_KERNEL_ARCH := $(strip $(TARGET_KERNEL_ARCH))
++ifeq ($(TARGET_KERNEL_ARCH),)
++KERNEL_ARCH := $(TARGET_ARCH)
++else
++KERNEL_ARCH := $(TARGET_KERNEL_ARCH)
++endif
++
++TARGET_KERNEL_HEADER_ARCH := $(strip $(TARGET_KERNEL_HEADER_ARCH))
++ifeq ($(TARGET_KERNEL_HEADER_ARCH),)
++KERNEL_HEADER_ARCH := $(KERNEL_ARCH)
++else
++KERNEL_HEADER_ARCH := $(TARGET_KERNEL_HEADER_ARCH)
++endif
++
++KERNEL_HEADER_DEFCONFIG := $(strip $(KERNEL_HEADER_DEFCONFIG))
++ifeq ($(KERNEL_HEADER_DEFCONFIG),)
++KERNEL_HEADER_DEFCONFIG := $(KERNEL_DEFCONFIG)
++endif
++
++
+ ifneq ($(BOARD_KERNEL_IMAGE_NAME),)
+-	TARGET_PREBUILT_INT_KERNEL_TYPE := $(BOARD_KERNEL_IMAGE_NAME)
+-	TARGET_PREBUILT_INT_KERNEL := $(KERNEL_OUT)/arch/$(TARGET_ARCH)/boot/$(TARGET_PREBUILT_INT_KERNEL_TYPE)
++  TARGET_PREBUILT_INT_KERNEL_TYPE := $(BOARD_KERNEL_IMAGE_NAME)
+ else
+-	TARGET_PREBUILT_INT_KERNEL := $(KERNEL_OUT)/arch/$(TARGET_ARCH)/boot/zImage
+-	TARGET_PREBUILT_INT_KERNEL_TYPE := zImage
++  ifeq ($(TARGET_USES_UNCOMPRESSED_KERNEL),true)
++    TARGET_PREBUILT_INT_KERNEL_TYPE := Image
++  else
++    TARGET_PREBUILT_INT_KERNEL_TYPE := zImage
++  endif
++endif
++
++TARGET_PREBUILT_INT_KERNEL := $(KERNEL_OUT)/arch/$(KERNEL_ARCH)/boot/$(TARGET_PREBUILT_INT_KERNEL_TYPE)
++
++# Clear this first to prevent accidental poisoning from env
++MAKE_FLAGS :=
++
++ifeq ($(KERNEL_ARCH),arm64)
++  # Avoid "unsupported RELA relocation: 311" errors (R_AARCH64_ADR_GOT_PAGE)
++  MAKE_FLAGS += CFLAGS_MODULE="-fno-pic"
++  ifeq ($(TARGET_ARCH),arm)
++    KERNEL_CONFIG_OVERRIDE := CONFIG_ANDROID_BINDER_IPC_32BIT=y
++  endif
+ endif
+ 
++
+ ## Do be discontinued in a future version. Notify builder about target
+ ## kernel format requirement
+ ifeq ($(BOARD_KERNEL_IMAGE_NAME),)
+@@ -97,12 +133,7 @@ else
+     else
+         #$(info Kernel source found, building it)
+         FULL_KERNEL_BUILD := true
+-        ifeq ($(TARGET_USES_UNCOMPRESSED_KERNEL),true)
+-        $(info Using uncompressed kernel)
+-            KERNEL_BIN := $(KERNEL_OUT)/piggy
+-        else
+-            KERNEL_BIN := $(TARGET_PREBUILT_INT_KERNEL)
+-        endif
++        KERNEL_BIN := $(TARGET_PREBUILT_INT_KERNEL)
+     endif
+ endif
+ 
+@@ -112,19 +143,38 @@ KERNEL_HEADERS_INSTALL := $(KERNEL_OUT)/usr
+ KERNEL_MODULES_INSTALL := system
+ KERNEL_MODULES_OUT := $(TARGET_OUT)/lib/modules
+ 
+-ifeq ($(KERNEL_TOOLCHAIN),)
+-KERNEL_TOOLCHAIN := $(ARM_EABI_TOOLCHAIN)
+-endif
++TARGET_KERNEL_CROSS_COMPILE_PREFIX := $(strip $(TARGET_KERNEL_CROSS_COMPILE_PREFIX))
++ifeq ($(TARGET_KERNEL_CROSS_COMPILE_PREFIX),)
+ ifeq ($(KERNEL_TOOLCHAIN_PREFIX),)
+ KERNEL_TOOLCHAIN_PREFIX := arm-eabi-
+ endif
++else
++KERNEL_TOOLCHAIN_PREFIX := $(TARGET_KERNEL_CROSS_COMPILE_PREFIX)
++endif
++
++ifeq ($(KERNEL_TOOLCHAIN),)
++KERNEL_TOOLCHAIN_PATH := $(KERNEL_TOOLCHAIN_PREFIX)
++else
++ifneq ($(KERNEL_TOOLCHAIN_PREFIX),)
++KERNEL_TOOLCHAIN_PATH := $(KERNEL_TOOLCHAIN)/$(KERNEL_TOOLCHAIN_PREFIX)
++endif
++endif
++
++ifneq ($(USE_CCACHE),)
++    ccache := $(ANDROID_BUILD_TOP)/prebuilts/misc/$(HOST_PREBUILT_TAG)/ccache/ccache
++    # Check that the executable is here.
++    ccache := $(strip $(wildcard $(ccache)))
++endif
++
++KERNEL_CROSS_COMPILE := CROSS_COMPILE="$(ccache) $(KERNEL_TOOLCHAIN_PATH)"
++ccache =
+ 
+ define mv-modules
+     mdpath=`find $(KERNEL_MODULES_OUT) -type f -name modules.order`;\
+     if [ "$$mdpath" != "" ];then\
+         mpath=`dirname $$mdpath`;\
+         ko=`find $$mpath/kernel -type f -name *.ko`;\
+-        for i in $$ko; do $(KERNEL_TOOLCHAIN)/$(KERNEL_TOOLCHAIN_PREFIX)strip --strip-unneeded $$i;\
++        for i in $$ko; do $(KERNEL_TOOLCHAIN_PATH)strip --strip-unneeded $$i;\
+         mv $$i $(KERNEL_MODULES_OUT)/; done;\
+     fi
+ endef
+@@ -136,18 +186,8 @@ define clean-module-folder
+     fi
+ endef
+ 
+-ifeq ($(TARGET_ARCH),arm)
+-    ifneq ($(USE_CCACHE),)
+-      ccache := $(ANDROID_BUILD_TOP)/prebuilts/misc/$(HOST_PREBUILT_TAG)/ccache/ccache
+-      # Check that the executable is here.
+-      ccache := $(strip $(wildcard $(ccache)))
+-    endif
+-    ARM_CROSS_COMPILE:=CROSS_COMPILE="$(ccache) $(KERNEL_TOOLCHAIN)/$(KERNEL_TOOLCHAIN_PREFIX)"
+-    ccache = 
+-endif
+-
+ ifeq ($(HOST_OS),darwin)
+-  MAKE_FLAGS := C_INCLUDE_PATH=$(ANDROID_BUILD_TOP)/external/elfutils/0.153/libelf/
++  MAKE_FLAGS += C_INCLUDE_PATH=$(ANDROID_BUILD_TOP)/external/elfutils/0.153/libelf/
+ endif
+ 
+ ifeq ($(TARGET_KERNEL_MODULES),)
+@@ -159,16 +199,17 @@ $(KERNEL_OUT):
+ 	mkdir -p $(KERNEL_MODULES_OUT)
+ 
+ $(KERNEL_CONFIG): $(KERNEL_OUT)
+-	$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) VARIANT_DEFCONFIG=$(VARIANT_DEFCONFIG) SELINUX_DEFCONFIG=$(SELINUX_DEFCONFIG) $(KERNEL_DEFCONFIG)
+-
+-$(KERNEL_OUT)/piggy : $(TARGET_PREBUILT_INT_KERNEL)
+-	$(hide) gunzip -c $(KERNEL_OUT)/arch/$(TARGET_ARCH)/boot/compressed/piggy.gzip > $(KERNEL_OUT)/piggy
++	$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) VARIANT_DEFCONFIG=$(VARIANT_DEFCONFIG) SELINUX_DEFCONFIG=$(SELINUX_DEFCONFIG) $(KERNEL_DEFCONFIG)
++	$(hide) if [ ! -z "$(KERNEL_CONFIG_OVERRIDE)" ]; then \
++			echo "Overriding kernel config with '$(KERNEL_CONFIG_OVERRIDE)'"; \
++			echo $(KERNEL_CONFIG_OVERRIDE) >> $(KERNEL_OUT)/.config; \
++			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) oldconfig; fi
+ 
+ TARGET_KERNEL_BINARIES: $(KERNEL_OUT) $(KERNEL_CONFIG) $(KERNEL_HEADERS_INSTALL)
+-	$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) $(TARGET_PREBUILT_INT_KERNEL_TYPE)
+-	-$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) dtbs
+-	-$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) modules
+-	-$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) INSTALL_MOD_PATH=../../$(KERNEL_MODULES_INSTALL) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) modules_install
++	$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) $(TARGET_PREBUILT_INT_KERNEL_TYPE)
++	-$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) dtbs
++	-$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) modules
++	-$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) INSTALL_MOD_PATH=../../$(KERNEL_MODULES_INSTALL) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) modules_install
+ 	$(mv-modules)
+ 	$(clean-module-folder)
+ 
+@@ -179,7 +220,28 @@ $(TARGET_PREBUILT_INT_KERNEL): $(TARGET_KERNEL_MODULES)
+ 	$(clean-module-folder)
+ 
+ $(KERNEL_HEADERS_INSTALL): $(KERNEL_OUT) $(KERNEL_CONFIG)
+-	$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) headers_install
++	$(hide) if [ ! -z "$(KERNEL_HEADER_DEFCONFIG)" ]; then \
++			$(hide) rm -f ../$(KERNEL_CONFIG); \
++			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_HEADER_ARCH) $(KERNEL_CROSS_COMPILE) $(KERNEL_HEADER_DEFCONFIG); \
++			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_HEADER_ARCH) $(KERNEL_CROSS_COMPILE) headers_install; fi
++	$(hide) if [ "$(KERNEL_HEADER_DEFCONFIG)" != "$(KERNEL_DEFCONFIG)" ]; then \
++			echo "Used a different defconfig for header generation"; \
++			$(hide) rm -f ../$(KERNEL_CONFIG); \
++			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) $(KERNEL_DEFCONFIG); fi
++	$(hide) if [ ! -z "$(KERNEL_CONFIG_OVERRIDE)" ]; then \
++			echo "Overriding kernel config with '$(KERNEL_CONFIG_OVERRIDE)'"; \
++			echo $(KERNEL_CONFIG_OVERRIDE) >> $(KERNEL_OUT)/.config; \
++			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) oldconfig; fi
++
++kerneltags: $(KERNEL_OUT) $(KERNEL_CONFIG)
++	$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) tags
++
++kernelconfig: $(KERNEL_OUT) $(KERNEL_CONFIG)
++	env KCONFIG_NOTIMESTAMP=true \
++		 $(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) menuconfig
++	env KCONFIG_NOTIMESTAMP=true \
++		 $(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) savedefconfig
++	cp $(KERNEL_OUT)/defconfig kernel/arch/$(KERNEL_ARCH)/configs/$(KERNEL_DEFCONFIG)
+ 
+ endif # FULL_KERNEL_BUILD
+ 
+-- 
+2.1.4
+
+
+From 04a042d6a34977fa1ebfc27fcf4663dfbc7588b7 Mon Sep 17 00:00:00 2001
+From: dhacker29 <dhackerdvm@gmail.com>
+Date: Sun, 18 Jan 2015 19:34:14 -0500
+Subject: [PATCH 06/15] Fix kernel.mk if SELINUX or VARIANT_DEFCONFIG is
+ defined
+
+KERNEL_HEADER_DEFCONFIG was ignoring SELINUX_DEFCONFIG thus breaking
+all selinux support
+
+Change-Id: Idc3367d6b4b85343078e63e87dca6d6d052e7f53
+---
+ core/tasks/kernel.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/core/tasks/kernel.mk b/core/tasks/kernel.mk
+index 9f40eec..a2eb21e 100644
+--- a/core/tasks/kernel.mk
++++ b/core/tasks/kernel.mk
+@@ -222,12 +222,12 @@ $(TARGET_PREBUILT_INT_KERNEL): $(TARGET_KERNEL_MODULES)
+ $(KERNEL_HEADERS_INSTALL): $(KERNEL_OUT) $(KERNEL_CONFIG)
+ 	$(hide) if [ ! -z "$(KERNEL_HEADER_DEFCONFIG)" ]; then \
+ 			$(hide) rm -f ../$(KERNEL_CONFIG); \
+-			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_HEADER_ARCH) $(KERNEL_CROSS_COMPILE) $(KERNEL_HEADER_DEFCONFIG); \
++			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_HEADER_ARCH) $(KERNEL_CROSS_COMPILE) VARIANT_DEFCONFIG=$(VARIANT_DEFCONFIG) SELINUX_DEFCONFIG=$(SELINUX_DEFCONFIG) $(KERNEL_HEADER_DEFCONFIG); \
+ 			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_HEADER_ARCH) $(KERNEL_CROSS_COMPILE) headers_install; fi
+ 	$(hide) if [ "$(KERNEL_HEADER_DEFCONFIG)" != "$(KERNEL_DEFCONFIG)" ]; then \
+ 			echo "Used a different defconfig for header generation"; \
+ 			$(hide) rm -f ../$(KERNEL_CONFIG); \
+-			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) $(KERNEL_DEFCONFIG); fi
++			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) VARIANT_DEFCONFIG=$(VARIANT_DEFCONFIG) SELINUX_DEFCONFIG=$(SELINUX_DEFCONFIG) $(KERNEL_DEFCONFIG); fi
+ 	$(hide) if [ ! -z "$(KERNEL_CONFIG_OVERRIDE)" ]; then \
+ 			echo "Overriding kernel config with '$(KERNEL_CONFIG_OVERRIDE)'"; \
+ 			echo $(KERNEL_CONFIG_OVERRIDE) >> $(KERNEL_OUT)/.config; \
+-- 
+2.1.4
+
+
+From 50bbbc8172cc636b00b1627f520314fc6fa06506 Mon Sep 17 00:00:00 2001
+From: Ricardo Cerqueira <ricardo@cyngn.com>
+Date: Tue, 20 Jan 2015 01:41:19 +0000
+Subject: [PATCH 07/15] build: kernel: Fix stray "@"
+
+Nested "$(hide)"s (makefile @) don't work. There was one at the
+beginning of the script, remove the inner one to prevent it from
+being interpreted as a shell command
+
+Change-Id: I08a829ee56b212366a0f5a3812f7a614667a9c2b
+---
+ core/tasks/kernel.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/core/tasks/kernel.mk b/core/tasks/kernel.mk
+index a2eb21e..2c49271 100644
+--- a/core/tasks/kernel.mk
++++ b/core/tasks/kernel.mk
+@@ -221,12 +221,12 @@ $(TARGET_PREBUILT_INT_KERNEL): $(TARGET_KERNEL_MODULES)
+ 
+ $(KERNEL_HEADERS_INSTALL): $(KERNEL_OUT) $(KERNEL_CONFIG)
+ 	$(hide) if [ ! -z "$(KERNEL_HEADER_DEFCONFIG)" ]; then \
+-			$(hide) rm -f ../$(KERNEL_CONFIG); \
++			rm -f ../$(KERNEL_CONFIG); \
+ 			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_HEADER_ARCH) $(KERNEL_CROSS_COMPILE) VARIANT_DEFCONFIG=$(VARIANT_DEFCONFIG) SELINUX_DEFCONFIG=$(SELINUX_DEFCONFIG) $(KERNEL_HEADER_DEFCONFIG); \
+ 			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_HEADER_ARCH) $(KERNEL_CROSS_COMPILE) headers_install; fi
+ 	$(hide) if [ "$(KERNEL_HEADER_DEFCONFIG)" != "$(KERNEL_DEFCONFIG)" ]; then \
+ 			echo "Used a different defconfig for header generation"; \
+-			$(hide) rm -f ../$(KERNEL_CONFIG); \
++			rm -f ../$(KERNEL_CONFIG); \
+ 			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) VARIANT_DEFCONFIG=$(VARIANT_DEFCONFIG) SELINUX_DEFCONFIG=$(SELINUX_DEFCONFIG) $(KERNEL_DEFCONFIG); fi
+ 	$(hide) if [ ! -z "$(KERNEL_CONFIG_OVERRIDE)" ]; then \
+ 			echo "Overriding kernel config with '$(KERNEL_CONFIG_OVERRIDE)'"; \
+-- 
+2.1.4
+
+
+From 267752dcaf2e6dc823e9d163a4c83ab7e92633d4 Mon Sep 17 00:00:00 2001
+From: Steve Kondik <steve@cyngn.com>
+Date: Mon, 9 Mar 2015 15:07:08 +0000
+Subject: [PATCH 08/15] build: Add support for additional kernel config snippet
+
+ * Add support for TARGET_KERNEL_ADDITIONAL_CONFIG which will append a
+   config snippet from arch/$ARCH/configs/ to the main defconfig.
+ * This can be used for various things, such as including DIAG support
+   into debuggable builds.
+
+Change-Id: Ifa48688a3f951dd8ecc9a13a27de3a476e7bf633
+---
+ core/tasks/kernel.mk | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/core/tasks/kernel.mk b/core/tasks/kernel.mk
+index 2c49271..764532c 100644
+--- a/core/tasks/kernel.mk
++++ b/core/tasks/kernel.mk
+@@ -72,6 +72,9 @@ ifeq ($(KERNEL_ARCH),arm64)
+   endif
+ endif
+ 
++ifneq ($(TARGET_KERNEL_ADDITIONAL_CONFIG),)
++KERNEL_ADDITIONAL_CONFIG := $(TARGET_KERNEL_ADDITIONAL_CONFIG)
++endif
+ 
+ ## Do be discontinued in a future version. Notify builder about target
+ ## kernel format requirement
+@@ -204,6 +207,10 @@ $(KERNEL_CONFIG): $(KERNEL_OUT)
+ 			echo "Overriding kernel config with '$(KERNEL_CONFIG_OVERRIDE)'"; \
+ 			echo $(KERNEL_CONFIG_OVERRIDE) >> $(KERNEL_OUT)/.config; \
+ 			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) oldconfig; fi
++	$(hide) if [ ! -z "$(KERNEL_ADDITIONAL_CONFIG)" ]; then \
++			echo "Using additional config '$(KERNEL_ADDITIONAL_CONFIG)'"; \
++			cat $(KERNEL_SRC)/arch/$(KERNEL_ARCH)/configs/$(KERNEL_ADDITIONAL_CONFIG) >> $(KERNEL_OUT)/.config; \
++			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) oldconfig; fi
+ 
+ TARGET_KERNEL_BINARIES: $(KERNEL_OUT) $(KERNEL_CONFIG) $(KERNEL_HEADERS_INSTALL)
+ 	$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) $(TARGET_PREBUILT_INT_KERNEL_TYPE)
+@@ -232,6 +239,10 @@ $(KERNEL_HEADERS_INSTALL): $(KERNEL_OUT) $(KERNEL_CONFIG)
+ 			echo "Overriding kernel config with '$(KERNEL_CONFIG_OVERRIDE)'"; \
+ 			echo $(KERNEL_CONFIG_OVERRIDE) >> $(KERNEL_OUT)/.config; \
+ 			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) oldconfig; fi
++	$(hide) if [ ! -z "$(KERNEL_ADDITIONAL_CONFIG)" ]; then \
++			echo "Using additional config '$(KERNEL_ADDITIONAL_CONFIG)'"; \
++			cat $(KERNEL_SRC)/arch/$(KERNEL_ARCH)/configs/$(KERNEL_ADDITIONAL_CONFIG) >> $(KERNEL_OUT)/.config; \
++			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) oldconfig; fi
+ 
+ kerneltags: $(KERNEL_OUT) $(KERNEL_CONFIG)
+ 	$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) tags
+-- 
+2.1.4
+
+
+From e3a9289dcf55e8b7761eb2a239b192b7ed9169d3 Mon Sep 17 00:00:00 2001
+From: Pawit Pornkitprasan <p.pawit@gmail.com>
+Date: Tue, 16 Dec 2014 19:19:52 +0700
+Subject: [PATCH 09/15] minigzip dependency for kernel
+
+i9082 kernel uses minigzip
+
+Change-Id: I8c07a76eec568bce641b158d01ef8cd88b9997d4
+---
+ core/tasks/kernel.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/tasks/kernel.mk b/core/tasks/kernel.mk
+index 764532c..510047d 100644
+--- a/core/tasks/kernel.mk
++++ b/core/tasks/kernel.mk
+@@ -212,7 +212,7 @@ $(KERNEL_CONFIG): $(KERNEL_OUT)
+ 			cat $(KERNEL_SRC)/arch/$(KERNEL_ARCH)/configs/$(KERNEL_ADDITIONAL_CONFIG) >> $(KERNEL_OUT)/.config; \
+ 			$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) oldconfig; fi
+ 
+-TARGET_KERNEL_BINARIES: $(KERNEL_OUT) $(KERNEL_CONFIG) $(KERNEL_HEADERS_INSTALL)
++TARGET_KERNEL_BINARIES: $(KERNEL_OUT) $(KERNEL_CONFIG) $(KERNEL_HEADERS_INSTALL) $(MINIGZIP)
+ 	$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) $(TARGET_PREBUILT_INT_KERNEL_TYPE)
+ 	-$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) dtbs
+ 	-$(MAKE) $(MAKE_FLAGS) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) modules
+-- 
+2.1.4
+
+
+From 6fee330b2c6e9b696eea212c07c308a4559b26f8 Mon Sep 17 00:00:00 2001
+From: Cristoforo Cataldo <cristoforo.cataldo@gmail.com>
+Date: Sun, 30 Nov 2014 06:12:35 +0100
+Subject: [PATCH 10/15] core: Enable -mcpu=cortex-a9 flag for Cortex-A9 cpu
+ variant
+
+Change-Id: I9294a518bcdc21ccbae72eadd9f3c1a12982d028
+
+Conflicts:
+	core/combo/arch/arm/armv7-a-neon.mk
+---
+ core/combo/arch/arm/armv7-a-neon.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/core/combo/arch/arm/armv7-a-neon.mk b/core/combo/arch/arm/armv7-a-neon.mk
+index 99f17aa..164dc2a 100644
+--- a/core/combo/arch/arm/armv7-a-neon.mk
++++ b/core/combo/arch/arm/armv7-a-neon.mk
+@@ -19,6 +19,9 @@ ifneq (,$(filter cortex-a15 krait denver,$(TARGET_$(combo_2nd_arch_prefix)CPU_VA
+ 	arch_variant_ldflags := \
+ 		-Wl,--no-fix-cortex-a8
+ else
++ifeq ($(strip $(TARGET_$(combo_2nd_arch_prefix)CPU_VARIANT)),cortex-a9)
++	arch_variant_cflags := -mcpu=cortex-a9
++else
+ ifeq ($(strip $(TARGET_$(combo_2nd_arch_prefix)CPU_VARIANT)),cortex-a8)
+ 	arch_variant_cflags := -mcpu=cortex-a8
+ 	arch_variant_ldflags := \
+@@ -36,6 +39,7 @@ else
+ endif
+ endif
+ endif
++endif
+ 
+ arch_variant_cflags += \
+     -mfloat-abi=softfp \
+-- 
+2.1.4
+
+
+From 197b60bcf4dc7b99aa79c2bc7e8f344b33e9c131 Mon Sep 17 00:00:00 2001
+From: Ricardo Cerqueira <github@cerqueira.org>
+Date: Wed, 16 Nov 2011 23:14:27 +0000
+Subject: [PATCH 11/15] ota: Remove cruft we don't care about
+
+Skip the date check (downgrade to your content), and don't include
+recovery in otapackages.
+5.0.0 update: We want the recovery patchstuff back
+---
+ tools/releasetools/ota_from_target_files | 1556 +++++++++++++++++++++++++++++-
+ 1 file changed, 1555 insertions(+), 1 deletion(-)
+ mode change 120000 => 100755 tools/releasetools/ota_from_target_files
+
+diff --git a/tools/releasetools/ota_from_target_files b/tools/releasetools/ota_from_target_files
+deleted file mode 120000
+index 6755a90..0000000
+--- a/tools/releasetools/ota_from_target_files
++++ /dev/null
+@@ -1 +0,0 @@
+-ota_from_target_files.py
+\ No newline at end of file
+diff --git a/tools/releasetools/ota_from_target_files b/tools/releasetools/ota_from_target_files
+new file mode 100755
+index 0000000..e2e73df
+--- /dev/null
++++ b/tools/releasetools/ota_from_target_files
+@@ -0,0 +1,1555 @@
++#!/usr/bin/env python
++#
++# Copyright (C) 2008 The Android Open Source Project
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#      http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++"""
++Given a target-files zipfile, produces an OTA package that installs
++that build.  An incremental OTA is produced if -i is given, otherwise
++a full OTA is produced.
++
++Usage:  ota_from_target_files [flags] input_target_files output_ota_package
++
++  --board_config  <file>
++      Deprecated.
++
++  -k (--package_key) <key> Key to use to sign the package (default is
++      the value of default_system_dev_certificate from the input
++      target-files's META/misc_info.txt, or
++      "build/target/product/security/testkey" if that value is not
++      specified).
++
++      For incremental OTAs, the default value is based on the source
++      target-file, not the target build.
++
++  -i  (--incremental_from)  <file>
++      Generate an incremental OTA using the given target-files zip as
++      the starting build.
++
++  -v  (--verify)
++      Remount and verify the checksums of the files written to the
++      system and vendor (if used) partitions.  Incremental builds only.
++
++  -o  (--oem_settings)  <file>
++      Use the file to specify the expected OEM-specific properties
++      on the OEM partition of the intended device.
++
++  -w  (--wipe_user_data)
++      Generate an OTA package that will wipe the user data partition
++      when installed.
++
++  -n  (--no_prereq)
++      Omit the timestamp prereq check normally included at the top of
++      the build scripts (used for developer OTA packages which
++      legitimately need to go back and forth).
++
++  -e  (--extra_script)  <file>
++      Insert the contents of file at the end of the update script.
++
++  -a  (--aslr_mode)  <on|off>
++      Specify whether to turn on ASLR for the package (on by default).
++
++  -2  (--two_step)
++      Generate a 'two-step' OTA package, where recovery is updated
++      first, so that any changes made to the system partition are done
++      using the new recovery (new kernel, etc.).
++
++  --block
++      Generate a block-based OTA if possible.  Will fall back to a
++      file-based OTA if the target_files is older and doesn't support
++      block-based OTAs.
++
++  -b  (--binary)  <file>
++      Use the given binary as the update-binary in the output package,
++      instead of the binary in the build's target_files.  Use for
++      development only.
++
++  -t  (--worker_threads) <int>
++      Specifies the number of worker-threads that will be used when
++      generating patches for incremental updates (defaults to 3).
++
++"""
++
++import sys
++
++if sys.hexversion < 0x02070000:
++  print >> sys.stderr, "Python 2.7 or newer is required."
++  sys.exit(1)
++
++import copy
++import errno
++import multiprocessing
++import os
++import re
++import subprocess
++import tempfile
++import time
++import zipfile
++
++from hashlib import sha1 as sha1
++
++import common
++import edify_generator
++import build_image
++import blockimgdiff
++import sparse_img
++
++OPTIONS = common.OPTIONS
++OPTIONS.package_key = None
++OPTIONS.incremental_source = None
++OPTIONS.verify = False
++OPTIONS.require_verbatim = set()
++OPTIONS.prohibit_verbatim = set(("system/build.prop",))
++OPTIONS.patch_threshold = 0.95
++OPTIONS.wipe_user_data = False
++OPTIONS.omit_prereq = False
++OPTIONS.extra_script = None
++OPTIONS.aslr_mode = True
++OPTIONS.worker_threads = multiprocessing.cpu_count() // 2
++if OPTIONS.worker_threads == 0:
++  OPTIONS.worker_threads = 1
++OPTIONS.two_step = False
++OPTIONS.no_signing = False
++OPTIONS.block_based = False
++OPTIONS.updater_binary = None
++OPTIONS.oem_source = None
++OPTIONS.fallback_to_full = True
++
++def MostPopularKey(d, default):
++  """Given a dict, return the key corresponding to the largest
++  value.  Returns 'default' if the dict is empty."""
++  x = [(v, k) for (k, v) in d.iteritems()]
++  if not x: return default
++  x.sort()
++  return x[-1][1]
++
++
++def IsSymlink(info):
++  """Return true if the zipfile.ZipInfo object passed in represents a
++  symlink."""
++  return (info.external_attr >> 16) == 0120777
++
++def IsRegular(info):
++  """Return true if the zipfile.ZipInfo object passed in represents a
++  symlink."""
++  return (info.external_attr >> 28) == 010
++
++def ClosestFileMatch(src, tgtfiles, existing):
++  """Returns the closest file match between a source file and list
++     of potential matches.  The exact filename match is preferred,
++     then the sha1 is searched for, and finally a file with the same
++     basename is evaluated.  Rename support in the updater-binary is
++     required for the latter checks to be used."""
++
++  result = tgtfiles.get("path:" + src.name)
++  if result is not None:
++    return result
++
++  if not OPTIONS.target_info_dict.get("update_rename_support", False):
++    return None
++
++  if src.size < 1000:
++    return None
++
++  result = tgtfiles.get("sha1:" + src.sha1)
++  if result is not None and existing.get(result.name) is None:
++    return result
++  result = tgtfiles.get("file:" + src.name.split("/")[-1])
++  if result is not None and existing.get(result.name) is None:
++    return result
++  return None
++
++class ItemSet:
++  def __init__(self, partition, fs_config):
++    self.partition = partition
++    self.fs_config = fs_config
++    self.ITEMS = {}
++
++  def Get(self, name, dir=False):
++    if name not in self.ITEMS:
++      self.ITEMS[name] = Item(self, name, dir=dir)
++    return self.ITEMS[name]
++
++  def GetMetadata(self, input_zip):
++    # The target_files contains a record of what the uid,
++    # gid, and mode are supposed to be.
++    output = input_zip.read(self.fs_config)
++
++    for line in output.split("\n"):
++      if not line: continue
++      columns = line.split()
++      name, uid, gid, mode = columns[:4]
++      selabel = None
++      capabilities = None
++
++      # After the first 4 columns, there are a series of key=value
++      # pairs. Extract out the fields we care about.
++      for element in columns[4:]:
++        key, value = element.split("=")
++        if key == "selabel":
++          selabel = value
++        if key == "capabilities":
++          capabilities = value
++
++      i = self.ITEMS.get(name, None)
++      if i is not None:
++        i.uid = int(uid)
++        i.gid = int(gid)
++        i.mode = int(mode, 8)
++        i.selabel = selabel
++        i.capabilities = capabilities
++        if i.dir:
++          i.children.sort(key=lambda i: i.name)
++
++    # set metadata for the files generated by this script.
++    i = self.ITEMS.get("system/recovery-from-boot.p", None)
++    if i: i.uid, i.gid, i.mode, i.selabel, i.capabilities = 0, 0, 0644, None, None
++    i = self.ITEMS.get("system/etc/install-recovery.sh", None)
++    if i: i.uid, i.gid, i.mode, i.selabel, i.capabilities = 0, 0, 0544, None, None
++
++
++class Item:
++  """Items represent the metadata (user, group, mode) of files and
++  directories in the system image."""
++  def __init__(self, itemset, name, dir=False):
++    self.itemset = itemset
++    self.name = name
++    self.uid = None
++    self.gid = None
++    self.mode = None
++    self.selabel = None
++    self.capabilities = None
++    self.dir = dir
++
++    if name:
++      self.parent = itemset.Get(os.path.dirname(name), dir=True)
++      self.parent.children.append(self)
++    else:
++      self.parent = None
++    if dir:
++      self.children = []
++
++  def Dump(self, indent=0):
++    if self.uid is not None:
++      print "%s%s %d %d %o" % ("  "*indent, self.name, self.uid, self.gid, self.mode)
++    else:
++      print "%s%s %s %s %s" % ("  "*indent, self.name, self.uid, self.gid, self.mode)
++    if self.dir:
++      print "%s%s" % ("  "*indent, self.descendants)
++      print "%s%s" % ("  "*indent, self.best_subtree)
++      for i in self.children:
++        i.Dump(indent=indent+1)
++
++  def CountChildMetadata(self):
++    """Count up the (uid, gid, mode, selabel, capabilities) tuples for
++    all children and determine the best strategy for using set_perm_recursive and
++    set_perm to correctly chown/chmod all the files to their desired
++    values.  Recursively calls itself for all descendants.
++
++    Returns a dict of {(uid, gid, dmode, fmode, selabel, capabilities): count} counting up
++    all descendants of this node.  (dmode or fmode may be None.)  Also
++    sets the best_subtree of each directory Item to the (uid, gid,
++    dmode, fmode, selabel, capabilities) tuple that will match the most
++    descendants of that Item.
++    """
++
++    assert self.dir
++    d = self.descendants = {(self.uid, self.gid, self.mode, None, self.selabel, self.capabilities): 1}
++    for i in self.children:
++      if i.dir:
++        for k, v in i.CountChildMetadata().iteritems():
++          d[k] = d.get(k, 0) + v
++      else:
++        k = (i.uid, i.gid, None, i.mode, i.selabel, i.capabilities)
++        d[k] = d.get(k, 0) + 1
++
++    # Find the (uid, gid, dmode, fmode, selabel, capabilities)
++    # tuple that matches the most descendants.
++
++    # First, find the (uid, gid) pair that matches the most
++    # descendants.
++    ug = {}
++    for (uid, gid, _, _, _, _), count in d.iteritems():
++      ug[(uid, gid)] = ug.get((uid, gid), 0) + count
++    ug = MostPopularKey(ug, (0, 0))
++
++    # Now find the dmode, fmode, selabel, and capabilities that match
++    # the most descendants with that (uid, gid), and choose those.
++    best_dmode = (0, 0755)
++    best_fmode = (0, 0644)
++    best_selabel = (0, None)
++    best_capabilities = (0, None)
++    for k, count in d.iteritems():
++      if k[:2] != ug: continue
++      if k[2] is not None and count >= best_dmode[0]: best_dmode = (count, k[2])
++      if k[3] is not None and count >= best_fmode[0]: best_fmode = (count, k[3])
++      if k[4] is not None and count >= best_selabel[0]: best_selabel = (count, k[4])
++      if k[5] is not None and count >= best_capabilities[0]: best_capabilities = (count, k[5])
++    self.best_subtree = ug + (best_dmode[1], best_fmode[1], best_selabel[1], best_capabilities[1])
++
++    return d
++
++  def SetPermissions(self, script):
++    """Append set_perm/set_perm_recursive commands to 'script' to
++    set all permissions, users, and groups for the tree of files
++    rooted at 'self'."""
++
++    self.CountChildMetadata()
++
++    def recurse(item, current):
++      # current is the (uid, gid, dmode, fmode, selabel, capabilities) tuple that the current
++      # item (and all its children) have already been set to.  We only
++      # need to issue set_perm/set_perm_recursive commands if we're
++      # supposed to be something different.
++      if item.dir:
++        if current != item.best_subtree:
++          script.SetPermissionsRecursive("/"+item.name, *item.best_subtree)
++          current = item.best_subtree
++
++        if item.uid != current[0] or item.gid != current[1] or \
++           item.mode != current[2] or item.selabel != current[4] or \
++           item.capabilities != current[5]:
++          script.SetPermissions("/"+item.name, item.uid, item.gid,
++                                item.mode, item.selabel, item.capabilities)
++
++        for i in item.children:
++          recurse(i, current)
++      else:
++        if item.uid != current[0] or item.gid != current[1] or \
++               item.mode != current[3] or item.selabel != current[4] or \
++               item.capabilities != current[5]:
++          script.SetPermissions("/"+item.name, item.uid, item.gid,
++                                item.mode, item.selabel, item.capabilities)
++
++    recurse(self, (-1, -1, -1, -1, None, None))
++
++
++def CopyPartitionFiles(itemset, input_zip, output_zip=None, substitute=None):
++  """Copies files for the partition in the input zip to the output
++  zip.  Populates the Item class with their metadata, and returns a
++  list of symlinks.  output_zip may be None, in which case the copy is
++  skipped (but the other side effects still happen).  substitute is an
++  optional dict of {output filename: contents} to be output instead of
++  certain input files.
++  """
++
++  symlinks = []
++
++  partition = itemset.partition
++
++  for info in input_zip.infolist():
++    if info.filename.startswith(partition.upper() + "/"):
++      basefilename = info.filename[7:]
++      if IsSymlink(info):
++        symlinks.append((input_zip.read(info.filename),
++                         "/" + partition + "/" + basefilename))
++      else:
++        info2 = copy.copy(info)
++        fn = info2.filename = partition + "/" + basefilename
++        if substitute and fn in substitute and substitute[fn] is None:
++          continue
++        if output_zip is not None:
++          if substitute and fn in substitute:
++            data = substitute[fn]
++          else:
++            data = input_zip.read(info.filename)
++          output_zip.writestr(info2, data)
++        if fn.endswith("/"):
++          itemset.Get(fn[:-1], dir=True)
++        else:
++          itemset.Get(fn, dir=False)
++
++  symlinks.sort()
++  return symlinks
++
++
++def SignOutput(temp_zip_name, output_zip_name):
++  key_passwords = common.GetKeyPasswords([OPTIONS.package_key])
++  pw = key_passwords[OPTIONS.package_key]
++
++  common.SignFile(temp_zip_name, output_zip_name, OPTIONS.package_key, pw,
++                  whole_file=True)
++
++
++def AppendAssertions(script, info_dict, oem_dict = None):
++  oem_props = info_dict.get("oem_fingerprint_properties")
++  if oem_props is None or len(oem_props) == 0:
++    device = GetBuildProp("ro.product.device", info_dict)
++    script.AssertDevice(device)
++  else:
++    if oem_dict is None:
++      raise common.ExternalError("No OEM file provided to answer expected assertions")
++    for prop in oem_props.split():
++      if oem_dict.get(prop) is None:
++        raise common.ExternalError("The OEM file is missing the property %s" % prop)
++      script.AssertOemProperty(prop, oem_dict.get(prop))
++
++
++def HasRecoveryPatch(target_files_zip):
++  try:
++    target_files_zip.getinfo("SYSTEM/recovery-from-boot.p")
++    return True
++  except KeyError:
++    return False
++
++def HasVendorPartition(target_files_zip):
++  try:
++    target_files_zip.getinfo("VENDOR/")
++    return True
++  except KeyError:
++    return False
++
++def GetOemProperty(name, oem_props, oem_dict, info_dict):
++  if oem_props is not None and name in oem_props:
++    return oem_dict[name]
++  return GetBuildProp(name, info_dict)
++
++
++def CalculateFingerprint(oem_props, oem_dict, info_dict):
++  if oem_props is None:
++    return GetBuildProp("ro.build.fingerprint", info_dict)
++  return "%s/%s/%s:%s" % (
++    GetOemProperty("ro.product.brand", oem_props, oem_dict, info_dict),
++    GetOemProperty("ro.product.name", oem_props, oem_dict, info_dict),
++    GetOemProperty("ro.product.device", oem_props, oem_dict, info_dict),
++    GetBuildProp("ro.build.thumbprint", info_dict))
++
++
++def GetImage(which, tmpdir, info_dict):
++  # Return an image object (suitable for passing to BlockImageDiff)
++  # for the 'which' partition (most be "system" or "vendor").  If a
++  # prebuilt image and file map are found in tmpdir they are used,
++  # otherwise they are reconstructed from the individual files.
++
++  assert which in ("system", "vendor")
++
++  path = os.path.join(tmpdir, "IMAGES", which + ".img")
++  mappath = os.path.join(tmpdir, "IMAGES", which + ".map")
++  if os.path.exists(path) and os.path.exists(mappath):
++    print "using %s.img from target-files" % (which,)
++    # This is a 'new' target-files, which already has the image in it.
++
++  else:
++    print "building %s.img from target-files" % (which,)
++
++    # This is an 'old' target-files, which does not contain images
++    # already built.  Build them.
++
++    mappath = tempfile.mkstemp()[1]
++    OPTIONS.tempfiles.append(mappath)
++
++    import add_img_to_target_files
++    if which == "system":
++      path = add_img_to_target_files.BuildSystem(
++          tmpdir, info_dict, block_list=mappath)
++    elif which == "vendor":
++      path = add_img_to_target_files.BuildVendor(
++          tmpdir, info_dict, block_list=mappath)
++
++  return sparse_img.SparseImage(path, mappath)
++
++
++def WriteFullOTAPackage(input_zip, output_zip):
++  # TODO: how to determine this?  We don't know what version it will
++  # be installed on top of.  For now, we expect the API just won't
++  # change very often.
++  script = edify_generator.EdifyGenerator(3, OPTIONS.info_dict)
++
++  oem_props = OPTIONS.info_dict.get("oem_fingerprint_properties")
++  recovery_mount_options = OPTIONS.info_dict.get("recovery_mount_options")
++  oem_dict = None
++  if oem_props is not None and len(oem_props) > 0:
++    if OPTIONS.oem_source is None:
++      raise common.ExternalError("OEM source required for this build")
++    script.Mount("/oem", recovery_mount_options)
++    oem_dict = common.LoadDictionaryFromLines(open(OPTIONS.oem_source).readlines())
++
++  metadata = {"post-build": CalculateFingerprint(
++                               oem_props, oem_dict, OPTIONS.info_dict),
++              "pre-device": GetOemProperty("ro.product.device", oem_props, oem_dict,
++                                         OPTIONS.info_dict),
++              "post-timestamp": GetBuildProp("ro.build.date.utc",
++                                             OPTIONS.info_dict),
++              }
++
++  device_specific = common.DeviceSpecificParams(
++      input_zip=input_zip,
++      input_version=OPTIONS.info_dict["recovery_api_version"],
++      output_zip=output_zip,
++      script=script,
++      input_tmp=OPTIONS.input_tmp,
++      metadata=metadata,
++      info_dict=OPTIONS.info_dict)
++
++  has_recovery_patch = HasRecoveryPatch(input_zip)
++  block_based = OPTIONS.block_based and has_recovery_patch
++
++  #if not OPTIONS.omit_prereq:
++  #  ts = GetBuildProp("ro.build.date.utc", OPTIONS.info_dict)
++  #  ts_text = GetBuildProp("ro.build.date", OPTIONS.info_dict)
++  #  script.AssertOlderBuild(ts, ts_text)
++
++  AppendAssertions(script, OPTIONS.info_dict, oem_dict)
++  device_specific.FullOTA_Assertions()
++
++  # Two-step package strategy (in chronological order, which is *not*
++  # the order in which the generated script has things):
++  #
++  # if stage is not "2/3" or "3/3":
++  #    write recovery image to boot partition
++  #    set stage to "2/3"
++  #    reboot to boot partition and restart recovery
++  # else if stage is "2/3":
++  #    write recovery image to recovery partition
++  #    set stage to "3/3"
++  #    reboot to recovery partition and restart recovery
++  # else:
++  #    (stage must be "3/3")
++  #    set stage to ""
++  #    do normal full package installation:
++  #       wipe and install system, boot image, etc.
++  #       set up system to update recovery partition on first boot
++  #    complete script normally (allow recovery to mark itself finished and reboot)
++
++  recovery_img = common.GetBootableImage("recovery.img", "recovery.img",
++                                         OPTIONS.input_tmp, "RECOVERY")
++  if OPTIONS.two_step:
++    if not OPTIONS.info_dict.get("multistage_support", None):
++      assert False, "two-step packages not supported by this build"
++    fs = OPTIONS.info_dict["fstab"]["/misc"]
++    assert fs.fs_type.upper() == "EMMC", \
++        "two-step packages only supported on devices with EMMC /misc partitions"
++    bcb_dev = {"bcb_dev": fs.device}
++    common.ZipWriteStr(output_zip, "recovery.img", recovery_img.data)
++    script.AppendExtra("""
++if get_stage("%(bcb_dev)s") == "2/3" then
++""" % bcb_dev)
++    script.WriteRawImage("/recovery", "recovery.img")
++    script.AppendExtra("""
++set_stage("%(bcb_dev)s", "3/3");
++reboot_now("%(bcb_dev)s", "recovery");
++else if get_stage("%(bcb_dev)s") == "3/3" then
++""" % bcb_dev)
++
++  device_specific.FullOTA_InstallBegin()
++
++  system_progress = 0.75
++
++  if OPTIONS.wipe_user_data:
++    system_progress -= 0.1
++  if HasVendorPartition(input_zip):
++    system_progress -= 0.1
++
++  if "selinux_fc" in OPTIONS.info_dict:
++    WritePolicyConfig(OPTIONS.info_dict["selinux_fc"], output_zip)
++
++  recovery_mount_options = OPTIONS.info_dict.get("recovery_mount_options")
++
++  system_items = ItemSet("system", "META/filesystem_config.txt")
++  script.ShowProgress(system_progress, 0)
++
++  if block_based:
++    # Full OTA is done as an "incremental" against an empty source
++    # image.  This has the effect of writing new data from the package
++    # to the entire partition, but lets us reuse the updater code that
++    # writes incrementals to do it.
++    system_tgt = GetImage("system", OPTIONS.input_tmp, OPTIONS.info_dict)
++    system_tgt.ResetFileMap()
++    system_diff = common.BlockDifference("system", system_tgt, src=None)
++    system_diff.WriteScript(script, output_zip)
++  else:
++    script.FormatPartition("/system")
++    script.Mount("/system", recovery_mount_options)
++    if not has_recovery_patch:
++      script.UnpackPackageDir("recovery", "/system")
++    script.UnpackPackageDir("system", "/system")
++    symlinks = CopyPartitionFiles(system_items, input_zip, output_zip)
++    script.MakeSymlinks(symlinks)
++
++  boot_img = common.GetBootableImage("boot.img", "boot.img",
++                                     OPTIONS.input_tmp, "BOOT")
++
++  if not block_based:
++    def output_sink(fn, data):
++      common.ZipWriteStr(output_zip, "recovery/" + fn, data)
++      system_items.Get("system/" + fn, dir=False)
++
++    common.MakeRecoveryPatch(OPTIONS.input_tmp, output_sink,
++                             recovery_img, boot_img)
++
++    system_items.GetMetadata(input_zip)
++    system_items.Get("system").SetPermissions(script)
++
++  if HasVendorPartition(input_zip):
++    vendor_items = ItemSet("vendor", "META/vendor_filesystem_config.txt")
++    script.ShowProgress(0.1, 0)
++
++    if block_based:
++      vendor_tgt = GetImage("vendor", OPTIONS.input_tmp, OPTIONS.info_dict)
++      vendor_tgt.ResetFileMap()
++      vendor_diff = common.BlockDifference("vendor", vendor_tgt)
++      vendor_diff.WriteScript(script, output_zip)
++    else:
++      script.FormatPartition("/vendor")
++      script.Mount("/vendor", recovery_mount_options)
++      script.UnpackPackageDir("vendor", "/vendor")
++
++      symlinks = CopyPartitionFiles(vendor_items, input_zip, output_zip)
++      script.MakeSymlinks(symlinks)
++
++      vendor_items.GetMetadata(input_zip)
++      vendor_items.Get("vendor").SetPermissions(script)
++
++  common.CheckSize(boot_img.data, "boot.img", OPTIONS.info_dict)
++  common.ZipWriteStr(output_zip, "boot.img", boot_img.data)
++
++  script.ShowProgress(0.05, 5)
++  script.WriteRawImage("/boot", "boot.img")
++
++  script.ShowProgress(0.2, 10)
++  device_specific.FullOTA_InstallEnd()
++
++  if OPTIONS.extra_script is not None:
++    script.AppendExtra(OPTIONS.extra_script)
++
++  script.UnmountAll()
++
++  if OPTIONS.wipe_user_data:
++    script.ShowProgress(0.1, 10)
++    script.FormatPartition("/data")
++
++  if OPTIONS.two_step:
++    script.AppendExtra("""
++set_stage("%(bcb_dev)s", "");
++""" % bcb_dev)
++    script.AppendExtra("else\n")
++    script.WriteRawImage("/boot", "recovery.img")
++    script.AppendExtra("""
++set_stage("%(bcb_dev)s", "2/3");
++reboot_now("%(bcb_dev)s", "");
++endif;
++endif;
++""" % bcb_dev)
++  script.AddToZip(input_zip, output_zip, input_path=OPTIONS.updater_binary)
++  WriteMetadata(metadata, output_zip)
++
++
++def WritePolicyConfig(file_context, output_zip):
++  f = open(file_context, 'r');
++  basename = os.path.basename(file_context)
++  common.ZipWriteStr(output_zip, basename, f.read())
++
++
++def WriteMetadata(metadata, output_zip):
++  common.ZipWriteStr(output_zip, "META-INF/com/android/metadata",
++                     "".join(["%s=%s\n" % kv
++                              for kv in sorted(metadata.iteritems())]))
++
++
++def LoadPartitionFiles(z, partition):
++  """Load all the files from the given partition in a given target-files
++  ZipFile, and return a dict of {filename: File object}."""
++  out = {}
++  prefix = partition.upper() + "/"
++  for info in z.infolist():
++    if info.filename.startswith(prefix) and not IsSymlink(info):
++      basefilename = info.filename[7:]
++      fn = partition + "/" + basefilename
++      data = z.read(info.filename)
++      out[fn] = common.File(fn, data)
++  return out
++
++
++def GetBuildProp(prop, info_dict):
++  """Return the fingerprint of the build of a given target-files info_dict."""
++  try:
++    return info_dict.get("build.prop", {})[prop]
++  except KeyError:
++    raise common.ExternalError("couldn't find %s in build.prop" % (prop,))
++
++
++def AddToKnownPaths(filename, known_paths):
++  if filename[-1] == "/":
++    return
++  dirs = filename.split("/")[:-1]
++  while len(dirs) > 0:
++    path = "/".join(dirs)
++    if path in known_paths:
++      break;
++    known_paths.add(path)
++    dirs.pop()
++
++
++def WriteBlockIncrementalOTAPackage(target_zip, source_zip, output_zip):
++  source_version = OPTIONS.source_info_dict["recovery_api_version"]
++  target_version = OPTIONS.target_info_dict["recovery_api_version"]
++
++  if source_version == 0:
++    print ("WARNING: generating edify script for a source that "
++           "can't install it.")
++  script = edify_generator.EdifyGenerator(source_version,
++                                          OPTIONS.target_info_dict)
++
++  metadata = {"pre-device": GetBuildProp("ro.product.device",
++                                         OPTIONS.source_info_dict),
++              "post-timestamp": GetBuildProp("ro.build.date.utc",
++                                             OPTIONS.target_info_dict),
++              }
++
++  device_specific = common.DeviceSpecificParams(
++      source_zip=source_zip,
++      source_version=source_version,
++      target_zip=target_zip,
++      target_version=target_version,
++      output_zip=output_zip,
++      script=script,
++      metadata=metadata,
++      info_dict=OPTIONS.info_dict)
++
++  source_fp = GetBuildProp("ro.build.fingerprint", OPTIONS.source_info_dict)
++  target_fp = GetBuildProp("ro.build.fingerprint", OPTIONS.target_info_dict)
++  metadata["pre-build"] = source_fp
++  metadata["post-build"] = target_fp
++
++  source_boot = common.GetBootableImage(
++      "/tmp/boot.img", "boot.img", OPTIONS.source_tmp, "BOOT",
++      OPTIONS.source_info_dict)
++  target_boot = common.GetBootableImage(
++      "/tmp/boot.img", "boot.img", OPTIONS.target_tmp, "BOOT")
++  updating_boot = (not OPTIONS.two_step and
++                   (source_boot.data != target_boot.data))
++
++  source_recovery = common.GetBootableImage(
++      "/tmp/recovery.img", "recovery.img", OPTIONS.source_tmp, "RECOVERY",
++      OPTIONS.source_info_dict)
++  target_recovery = common.GetBootableImage(
++      "/tmp/recovery.img", "recovery.img", OPTIONS.target_tmp, "RECOVERY")
++  updating_recovery = (source_recovery.data != target_recovery.data)
++
++  system_src = GetImage("system", OPTIONS.source_tmp, OPTIONS.source_info_dict)
++  system_tgt = GetImage("system", OPTIONS.target_tmp, OPTIONS.target_info_dict)
++  system_diff = common.BlockDifference("system", system_tgt, system_src,
++                                       check_first_block=True)
++
++  if HasVendorPartition(target_zip):
++    if not HasVendorPartition(source_zip):
++      raise RuntimeError("can't generate incremental that adds /vendor")
++    vendor_src = GetImage("vendor", OPTIONS.source_tmp, OPTIONS.source_info_dict)
++    vendor_tgt = GetImage("vendor", OPTIONS.target_tmp, OPTIONS.target_info_dict)
++    vendor_diff = common.BlockDifference("vendor", vendor_tgt, vendor_src,
++                                         check_first_block=True)
++  else:
++    vendor_diff = None
++
++  oem_props = OPTIONS.target_info_dict.get("oem_fingerprint_properties")
++  recovery_mount_options = OPTIONS.target_info_dict.get("recovery_mount_options")
++  oem_dict = None
++  if oem_props is not None and len(oem_props) > 0:
++    if OPTIONS.oem_source is None:
++      raise common.ExternalError("OEM source required for this build")
++    script.Mount("/oem", recovery_mount_options)
++    oem_dict = common.LoadDictionaryFromLines(open(OPTIONS.oem_source).readlines())
++
++  AppendAssertions(script, OPTIONS.target_info_dict, oem_dict)
++  device_specific.IncrementalOTA_Assertions()
++
++  # Two-step incremental package strategy (in chronological order,
++  # which is *not* the order in which the generated script has
++  # things):
++  #
++  # if stage is not "2/3" or "3/3":
++  #    do verification on current system
++  #    write recovery image to boot partition
++  #    set stage to "2/3"
++  #    reboot to boot partition and restart recovery
++  # else if stage is "2/3":
++  #    write recovery image to recovery partition
++  #    set stage to "3/3"
++  #    reboot to recovery partition and restart recovery
++  # else:
++  #    (stage must be "3/3")
++  #    perform update:
++  #       patch system files, etc.
++  #       force full install of new boot image
++  #       set up system to update recovery partition on first boot
++  #    complete script normally (allow recovery to mark itself finished and reboot)
++
++  if OPTIONS.two_step:
++    if not OPTIONS.info_dict.get("multistage_support", None):
++      assert False, "two-step packages not supported by this build"
++    fs = OPTIONS.info_dict["fstab"]["/misc"]
++    assert fs.fs_type.upper() == "EMMC", \
++        "two-step packages only supported on devices with EMMC /misc partitions"
++    bcb_dev = {"bcb_dev": fs.device}
++    common.ZipWriteStr(output_zip, "recovery.img", target_recovery.data)
++    script.AppendExtra("""
++if get_stage("%(bcb_dev)s") == "2/3" then
++""" % bcb_dev)
++    script.AppendExtra("sleep(20);\n");
++    script.WriteRawImage("/recovery", "recovery.img")
++    script.AppendExtra("""
++set_stage("%(bcb_dev)s", "3/3");
++reboot_now("%(bcb_dev)s", "recovery");
++else if get_stage("%(bcb_dev)s") != "3/3" then
++""" % bcb_dev)
++
++  script.Print("Verifying current system...")
++
++  device_specific.IncrementalOTA_VerifyBegin()
++
++  if oem_props is None:
++    script.AssertSomeFingerprint(source_fp, target_fp)
++  else:
++    script.AssertSomeThumbprint(
++        GetBuildProp("ro.build.thumbprint", OPTIONS.target_info_dict),
++        GetBuildProp("ro.build.thumbprint", OPTIONS.source_info_dict))
++
++  if updating_boot:
++    boot_type, boot_device = common.GetTypeAndDevice("/boot", OPTIONS.info_dict)
++    d = common.Difference(target_boot, source_boot)
++    _, _, d = d.ComputePatch()
++    if d is None:
++      include_full_boot = True
++      common.ZipWriteStr(output_zip, "boot.img", target_boot.data)
++    else:
++      include_full_boot = False
++
++      print "boot      target: %d  source: %d  diff: %d" % (
++          target_boot.size, source_boot.size, len(d))
++
++      common.ZipWriteStr(output_zip, "patch/boot.img.p", d)
++
++      script.PatchCheck("%s:%s:%d:%s:%d:%s" %
++                        (boot_type, boot_device,
++                         source_boot.size, source_boot.sha1,
++                         target_boot.size, target_boot.sha1))
++
++  device_specific.IncrementalOTA_VerifyEnd()
++
++  if OPTIONS.two_step:
++    script.WriteRawImage("/boot", "recovery.img")
++    script.AppendExtra("""
++set_stage("%(bcb_dev)s", "2/3");
++reboot_now("%(bcb_dev)s", "");
++else
++""" % bcb_dev)
++
++  # Verify the existing partitions.
++  system_diff.WriteVerifyScript(script)
++  if vendor_diff:
++    vendor_diff.WriteVerifyScript(script)
++
++  script.Comment("---- start making changes here ----")
++
++  device_specific.IncrementalOTA_InstallBegin()
++
++  system_diff.WriteScript(script, output_zip,
++                          progress=0.8 if vendor_diff else 0.9)
++  if vendor_diff:
++    vendor_diff.WriteScript(script, output_zip, progress=0.1)
++
++  if OPTIONS.two_step:
++    common.ZipWriteStr(output_zip, "boot.img", target_boot.data)
++    script.WriteRawImage("/boot", "boot.img")
++    print "writing full boot image (forced by two-step mode)"
++
++  if not OPTIONS.two_step:
++    if updating_boot:
++      if include_full_boot:
++        print "boot image changed; including full."
++        script.Print("Installing boot image...")
++        script.WriteRawImage("/boot", "boot.img")
++      else:
++        # Produce the boot image by applying a patch to the current
++        # contents of the boot partition, and write it back to the
++        # partition.
++        print "boot image changed; including patch."
++        script.Print("Patching boot image...")
++        script.ShowProgress(0.1, 10)
++        script.ApplyPatch("%s:%s:%d:%s:%d:%s"
++                          % (boot_type, boot_device,
++                             source_boot.size, source_boot.sha1,
++                             target_boot.size, target_boot.sha1),
++                          "-",
++                          target_boot.size, target_boot.sha1,
++                          source_boot.sha1, "patch/boot.img.p")
++    else:
++      print "boot image unchanged; skipping."
++
++  # Do device-specific installation (eg, write radio image).
++  device_specific.IncrementalOTA_InstallEnd()
++
++  if OPTIONS.extra_script is not None:
++    script.AppendExtra(OPTIONS.extra_script)
++
++  if OPTIONS.wipe_user_data:
++    script.Print("Erasing user data...")
++    script.FormatPartition("/data")
++
++  if OPTIONS.two_step:
++    script.AppendExtra("""
++set_stage("%(bcb_dev)s", "");
++endif;
++endif;
++""" % bcb_dev)
++
++  script.SetProgress(1)
++  script.AddToZip(target_zip, output_zip, input_path=OPTIONS.updater_binary)
++  WriteMetadata(metadata, output_zip)
++
++
++class FileDifference:
++  def __init__(self, partition, source_zip, target_zip, output_zip):
++    print "Loading target..."
++    self.target_data = target_data = LoadPartitionFiles(target_zip, partition)
++    print "Loading source..."
++    self.source_data = source_data = LoadPartitionFiles(source_zip, partition)
++
++    self.verbatim_targets = verbatim_targets = []
++    self.patch_list = patch_list = []
++    diffs = []
++    self.renames = renames = {}
++    known_paths = set()
++    largest_source_size = 0
++
++    matching_file_cache = {}
++    for fn, sf in source_data.items():
++      assert fn == sf.name
++      matching_file_cache["path:" + fn] = sf
++      if fn in target_data.keys():
++        AddToKnownPaths(fn, known_paths)
++      # Only allow eligibility for filename/sha matching
++      # if there isn't a perfect path match.
++      if target_data.get(sf.name) is None:
++        matching_file_cache["file:" + fn.split("/")[-1]] = sf
++        matching_file_cache["sha:" + sf.sha1] = sf
++
++    for fn in sorted(target_data.keys()):
++      tf = target_data[fn]
++      assert fn == tf.name
++      sf = ClosestFileMatch(tf, matching_file_cache, renames)
++      if sf is not None and sf.name != tf.name:
++        print "File has moved from " + sf.name + " to " + tf.name
++        renames[sf.name] = tf
++
++      if sf is None or fn in OPTIONS.require_verbatim:
++        # This file should be included verbatim
++        if fn in OPTIONS.prohibit_verbatim:
++          raise common.ExternalError("\"%s\" must be sent verbatim" % (fn,))
++        print "send", fn, "verbatim"
++        tf.AddToZip(output_zip)
++        verbatim_targets.append((fn, tf.size, tf.sha1))
++        if fn in target_data.keys():
++          AddToKnownPaths(fn, known_paths)
++      elif tf.sha1 != sf.sha1:
++        # File is different; consider sending as a patch
++        diffs.append(common.Difference(tf, sf))
++      else:
++        # Target file data identical to source (may still be renamed)
++        pass
++
++    common.ComputeDifferences(diffs)
++
++    for diff in diffs:
++      tf, sf, d = diff.GetPatch()
++      path = "/".join(tf.name.split("/")[:-1])
++      if d is None or len(d) > tf.size * OPTIONS.patch_threshold or \
++          path not in known_paths:
++        # patch is almost as big as the file; don't bother patching
++        # or a patch + rename cannot take place due to the target
++        # directory not existing
++        tf.AddToZip(output_zip)
++        verbatim_targets.append((tf.name, tf.size, tf.sha1))
++        if sf.name in renames:
++          del renames[sf.name]
++        AddToKnownPaths(tf.name, known_paths)
++      else:
++        common.ZipWriteStr(output_zip, "patch/" + sf.name + ".p", d)
++        patch_list.append((tf, sf, tf.size, common.sha1(d).hexdigest()))
++        largest_source_size = max(largest_source_size, sf.size)
++
++    self.largest_source_size = largest_source_size
++
++  def EmitVerification(self, script):
++    so_far = 0
++    for tf, sf, size, patch_sha in self.patch_list:
++      if tf.name != sf.name:
++        script.SkipNextActionIfTargetExists(tf.name, tf.sha1)
++      script.PatchCheck("/"+sf.name, tf.sha1, sf.sha1)
++      so_far += sf.size
++    return so_far
++
++  def EmitExplicitTargetVerification(self, script):
++    for fn, size, sha1 in self.verbatim_targets:
++      if (fn[-1] != "/"):
++        script.FileCheck("/"+fn, sha1)
++    for tf, _, _, _ in self.patch_list:
++      script.FileCheck(tf.name, tf.sha1)
++
++  def RemoveUnneededFiles(self, script, extras=()):
++    script.DeleteFiles(["/"+i[0] for i in self.verbatim_targets] +
++                       ["/"+i for i in sorted(self.source_data)
++                              if i not in self.target_data and
++                              i not in self.renames] +
++                       list(extras))
++
++  def TotalPatchSize(self):
++    return sum(i[1].size for i in self.patch_list)
++
++  def EmitPatches(self, script, total_patch_size, so_far):
++    self.deferred_patch_list = deferred_patch_list = []
++    for item in self.patch_list:
++      tf, sf, size, _ = item
++      if tf.name == "system/build.prop":
++        deferred_patch_list.append(item)
++        continue
++      if (sf.name != tf.name):
++        script.SkipNextActionIfTargetExists(tf.name, tf.sha1)
++      script.ApplyPatch("/"+sf.name, "-", tf.size, tf.sha1, sf.sha1, "patch/"+sf.name+".p")
++      so_far += tf.size
++      script.SetProgress(so_far / total_patch_size)
++    return so_far
++
++  def EmitDeferredPatches(self, script):
++    for item in self.deferred_patch_list:
++      tf, sf, size, _ = item
++      script.ApplyPatch("/"+sf.name, "-", tf.size, tf.sha1, sf.sha1, "patch/"+sf.name+".p")
++    script.SetPermissions("/system/build.prop", 0, 0, 0644, None, None)
++
++  def EmitRenames(self, script):
++    if len(self.renames) > 0:
++      script.Print("Renaming files...")
++      for src, tgt in self.renames.iteritems():
++        print "Renaming " + src + " to " + tgt.name
++        script.RenameFile(src, tgt.name)
++
++
++
++
++def WriteIncrementalOTAPackage(target_zip, source_zip, output_zip):
++  target_has_recovery_patch = HasRecoveryPatch(target_zip)
++  source_has_recovery_patch = HasRecoveryPatch(source_zip)
++
++  if (OPTIONS.block_based and
++      target_has_recovery_patch and
++      source_has_recovery_patch):
++    return WriteBlockIncrementalOTAPackage(target_zip, source_zip, output_zip)
++
++  source_version = OPTIONS.source_info_dict["recovery_api_version"]
++  target_version = OPTIONS.target_info_dict["recovery_api_version"]
++
++  if source_version == 0:
++    print ("WARNING: generating edify script for a source that "
++           "can't install it.")
++  script = edify_generator.EdifyGenerator(source_version,
++                                          OPTIONS.target_info_dict)
++
++  oem_props = OPTIONS.info_dict.get("oem_fingerprint_properties")
++  recovery_mount_options = OPTIONS.info_dict.get("recovery_mount_options")
++  oem_dict = None
++  if oem_props is not None and len(oem_props) > 0:
++    if OPTIONS.oem_source is None:
++      raise common.ExternalError("OEM source required for this build")
++    script.Mount("/oem", recovery_mount_options)
++    oem_dict = common.LoadDictionaryFromLines(open(OPTIONS.oem_source).readlines())
++
++  metadata = {"pre-device": GetOemProperty("ro.product.device", oem_props, oem_dict,
++                                         OPTIONS.source_info_dict),
++              "post-timestamp": GetBuildProp("ro.build.date.utc",
++                                             OPTIONS.target_info_dict),
++              }
++
++  device_specific = common.DeviceSpecificParams(
++      source_zip=source_zip,
++      source_version=source_version,
++      target_zip=target_zip,
++      target_version=target_version,
++      output_zip=output_zip,
++      script=script,
++      metadata=metadata,
++      info_dict=OPTIONS.info_dict)
++
++  system_diff = FileDifference("system", source_zip, target_zip, output_zip)
++  script.Mount("/system", recovery_mount_options)
++  if HasVendorPartition(target_zip):
++    vendor_diff = FileDifference("vendor", source_zip, target_zip, output_zip)
++    script.Mount("/vendor", recovery_mount_options)
++  else:
++    vendor_diff = None
++
++  target_fp = CalculateFingerprint(oem_props, oem_dict, OPTIONS.target_info_dict)
++  source_fp = CalculateFingerprint(oem_props, oem_dict, OPTIONS.source_info_dict)
++
++  if oem_props is None:
++    script.AssertSomeFingerprint(source_fp, target_fp)
++  else:
++    script.AssertSomeThumbprint(
++        GetBuildProp("ro.build.thumbprint", OPTIONS.target_info_dict),
++        GetBuildProp("ro.build.thumbprint", OPTIONS.source_info_dict))
++
++  metadata["pre-build"] = source_fp
++  metadata["post-build"] = target_fp
++
++  source_boot = common.GetBootableImage(
++      "/tmp/boot.img", "boot.img", OPTIONS.source_tmp, "BOOT",
++      OPTIONS.source_info_dict)
++  target_boot = common.GetBootableImage(
++      "/tmp/boot.img", "boot.img", OPTIONS.target_tmp, "BOOT")
++  updating_boot = (not OPTIONS.two_step and
++                   (source_boot.data != target_boot.data))
++
++  source_recovery = common.GetBootableImage(
++      "/tmp/recovery.img", "recovery.img", OPTIONS.source_tmp, "RECOVERY",
++      OPTIONS.source_info_dict)
++  target_recovery = common.GetBootableImage(
++      "/tmp/recovery.img", "recovery.img", OPTIONS.target_tmp, "RECOVERY")
++  updating_recovery = (source_recovery.data != target_recovery.data)
++
++  # Here's how we divide up the progress bar:
++  #  0.1 for verifying the start state (PatchCheck calls)
++  #  0.8 for applying patches (ApplyPatch calls)
++  #  0.1 for unpacking verbatim files, symlinking, and doing the
++  #      device-specific commands.
++
++  AppendAssertions(script, OPTIONS.target_info_dict, oem_dict)
++  device_specific.IncrementalOTA_Assertions()
++
++  # Two-step incremental package strategy (in chronological order,
++  # which is *not* the order in which the generated script has
++  # things):
++  #
++  # if stage is not "2/3" or "3/3":
++  #    do verification on current system
++  #    write recovery image to boot partition
++  #    set stage to "2/3"
++  #    reboot to boot partition and restart recovery
++  # else if stage is "2/3":
++  #    write recovery image to recovery partition
++  #    set stage to "3/3"
++  #    reboot to recovery partition and restart recovery
++  # else:
++  #    (stage must be "3/3")
++  #    perform update:
++  #       patch system files, etc.
++  #       force full install of new boot image
++  #       set up system to update recovery partition on first boot
++  #    complete script normally (allow recovery to mark itself finished and reboot)
++
++  if OPTIONS.two_step:
++    if not OPTIONS.info_dict.get("multistage_support", None):
++      assert False, "two-step packages not supported by this build"
++    fs = OPTIONS.info_dict["fstab"]["/misc"]
++    assert fs.fs_type.upper() == "EMMC", \
++        "two-step packages only supported on devices with EMMC /misc partitions"
++    bcb_dev = {"bcb_dev": fs.device}
++    common.ZipWriteStr(output_zip, "recovery.img", target_recovery.data)
++    script.AppendExtra("""
++if get_stage("%(bcb_dev)s") == "2/3" then
++""" % bcb_dev)
++    script.AppendExtra("sleep(20);\n");
++    script.WriteRawImage("/recovery", "recovery.img")
++    script.AppendExtra("""
++set_stage("%(bcb_dev)s", "3/3");
++reboot_now("%(bcb_dev)s", "recovery");
++else if get_stage("%(bcb_dev)s") != "3/3" then
++""" % bcb_dev)
++
++  script.Print("Verifying current system...")
++
++  device_specific.IncrementalOTA_VerifyBegin()
++
++  script.ShowProgress(0.1, 0)
++  so_far = system_diff.EmitVerification(script)
++  if vendor_diff:
++    so_far += vendor_diff.EmitVerification(script)
++
++  if updating_boot:
++    d = common.Difference(target_boot, source_boot)
++    _, _, d = d.ComputePatch()
++    print "boot      target: %d  source: %d  diff: %d" % (
++        target_boot.size, source_boot.size, len(d))
++
++    common.ZipWriteStr(output_zip, "patch/boot.img.p", d)
++
++    boot_type, boot_device = common.GetTypeAndDevice("/boot", OPTIONS.info_dict)
++
++    script.PatchCheck("%s:%s:%d:%s:%d:%s" %
++                      (boot_type, boot_device,
++                       source_boot.size, source_boot.sha1,
++                       target_boot.size, target_boot.sha1))
++    so_far += source_boot.size
++
++  size = []
++  if system_diff.patch_list: size.append(system_diff.largest_source_size)
++  if vendor_diff:
++    if vendor_diff.patch_list: size.append(vendor_diff.largest_source_size)
++  if size or updating_recovery or updating_boot:
++    script.CacheFreeSpaceCheck(max(size))
++
++  device_specific.IncrementalOTA_VerifyEnd()
++
++  if OPTIONS.two_step:
++    script.WriteRawImage("/boot", "recovery.img")
++    script.AppendExtra("""
++set_stage("%(bcb_dev)s", "2/3");
++reboot_now("%(bcb_dev)s", "");
++else
++""" % bcb_dev)
++
++  script.Comment("---- start making changes here ----")
++
++  device_specific.IncrementalOTA_InstallBegin()
++
++  if OPTIONS.two_step:
++    common.ZipWriteStr(output_zip, "boot.img", target_boot.data)
++    script.WriteRawImage("/boot", "boot.img")
++    print "writing full boot image (forced by two-step mode)"
++
++  script.Print("Removing unneeded files...")
++  system_diff.RemoveUnneededFiles(script, ("/system/recovery.img",))
++  if vendor_diff:
++    vendor_diff.RemoveUnneededFiles(script)
++
++  script.ShowProgress(0.8, 0)
++  total_patch_size = 1.0 + system_diff.TotalPatchSize()
++  if vendor_diff:
++    total_patch_size += vendor_diff.TotalPatchSize()
++  if updating_boot:
++    total_patch_size += target_boot.size
++
++  script.Print("Patching system files...")
++  so_far = system_diff.EmitPatches(script, total_patch_size, 0)
++  if vendor_diff:
++    script.Print("Patching vendor files...")
++    so_far = vendor_diff.EmitPatches(script, total_patch_size, so_far)
++
++  if not OPTIONS.two_step:
++    if updating_boot:
++      # Produce the boot image by applying a patch to the current
++      # contents of the boot partition, and write it back to the
++      # partition.
++      script.Print("Patching boot image...")
++      script.ApplyPatch("%s:%s:%d:%s:%d:%s"
++                        % (boot_type, boot_device,
++                           source_boot.size, source_boot.sha1,
++                           target_boot.size, target_boot.sha1),
++                        "-",
++                        target_boot.size, target_boot.sha1,
++                        source_boot.sha1, "patch/boot.img.p")
++      so_far += target_boot.size
++      script.SetProgress(so_far / total_patch_size)
++      print "boot image changed; including."
++    else:
++      print "boot image unchanged; skipping."
++
++  system_items = ItemSet("system", "META/filesystem_config.txt")
++  if vendor_diff:
++    vendor_items = ItemSet("vendor", "META/vendor_filesystem_config.txt")
++
++  if updating_recovery:
++    # Recovery is generated as a patch using both the boot image
++    # (which contains the same linux kernel as recovery) and the file
++    # /system/etc/recovery-resource.dat (which contains all the images
++    # used in the recovery UI) as sources.  This lets us minimize the
++    # size of the patch, which must be included in every OTA package.
++    #
++    # For older builds where recovery-resource.dat is not present, we
++    # use only the boot image as the source.
++
++    if not target_has_recovery_patch:
++      def output_sink(fn, data):
++        common.ZipWriteStr(output_zip, "recovery/" + fn, data)
++        system_items.Get("system/" + fn, dir=False)
++
++      common.MakeRecoveryPatch(OPTIONS.target_tmp, output_sink,
++                               target_recovery, target_boot)
++      script.DeleteFiles(["/system/recovery-from-boot.p",
++                          "/system/etc/install-recovery.sh"])
++    print "recovery image changed; including as patch from boot."
++  else:
++    print "recovery image unchanged; skipping."
++
++  script.ShowProgress(0.1, 10)
++
++  target_symlinks = CopyPartitionFiles(system_items, target_zip, None)
++  if vendor_diff:
++    target_symlinks.extend(CopyPartitionFiles(vendor_items, target_zip, None))
++
++  temp_script = script.MakeTemporary()
++  system_items.GetMetadata(target_zip)
++  system_items.Get("system").SetPermissions(temp_script)
++  if vendor_diff:
++    vendor_items.GetMetadata(target_zip)
++    vendor_items.Get("vendor").SetPermissions(temp_script)
++
++  # Note that this call will mess up the trees of Items, so make sure
++  # we're done with them.
++  source_symlinks = CopyPartitionFiles(system_items, source_zip, None)
++  if vendor_diff:
++    source_symlinks.extend(CopyPartitionFiles(vendor_items, source_zip, None))
++
++  target_symlinks_d = dict([(i[1], i[0]) for i in target_symlinks])
++  source_symlinks_d = dict([(i[1], i[0]) for i in source_symlinks])
++
++  # Delete all the symlinks in source that aren't in target.  This
++  # needs to happen before verbatim files are unpacked, in case a
++  # symlink in the source is replaced by a real file in the target.
++  to_delete = []
++  for dest, link in source_symlinks:
++    if link not in target_symlinks_d:
++      to_delete.append(link)
++  script.DeleteFiles(to_delete)
++
++  if system_diff.verbatim_targets:
++    script.Print("Unpacking new system files...")
++    script.UnpackPackageDir("system", "/system")
++  if vendor_diff and vendor_diff.verbatim_targets:
++    script.Print("Unpacking new vendor files...")
++    script.UnpackPackageDir("vendor", "/vendor")
++
++  if updating_recovery and not target_has_recovery_patch:
++    script.Print("Unpacking new recovery...")
++    script.UnpackPackageDir("recovery", "/system")
++
++  system_diff.EmitRenames(script)
++  if vendor_diff:
++    vendor_diff.EmitRenames(script)
++
++  script.Print("Symlinks and permissions...")
++
++  # Create all the symlinks that don't already exist, or point to
++  # somewhere different than what we want.  Delete each symlink before
++  # creating it, since the 'symlink' command won't overwrite.
++  to_create = []
++  for dest, link in target_symlinks:
++    if link in source_symlinks_d:
++      if dest != source_symlinks_d[link]:
++        to_create.append((dest, link))
++    else:
++      to_create.append((dest, link))
++  script.DeleteFiles([i[1] for i in to_create])
++  script.MakeSymlinks(to_create)
++
++  # Now that the symlinks are created, we can set all the
++  # permissions.
++  script.AppendScript(temp_script)
++
++  # Do device-specific installation (eg, write radio image).
++  device_specific.IncrementalOTA_InstallEnd()
++
++  if OPTIONS.extra_script is not None:
++    script.AppendExtra(OPTIONS.extra_script)
++
++  # Patch the build.prop file last, so if something fails but the
++  # device can still come up, it appears to be the old build and will
++  # get set the OTA package again to retry.
++  script.Print("Patching remaining system files...")
++  system_diff.EmitDeferredPatches(script)
++
++  if OPTIONS.wipe_user_data:
++    script.Print("Erasing user data...")
++    script.FormatPartition("/data")
++
++  if OPTIONS.two_step:
++    script.AppendExtra("""
++set_stage("%(bcb_dev)s", "");
++endif;
++endif;
++""" % bcb_dev)
++
++  if OPTIONS.verify and system_diff:
++    script.Print("Remounting and verifying system partition files...")
++    script.Unmount("/system")
++    script.Mount("/system")
++    system_diff.EmitExplicitTargetVerification(script)
++
++  if OPTIONS.verify and vendor_diff:
++    script.Print("Remounting and verifying vendor partition files...")
++    script.Unmount("/vendor")
++    script.Mount("/vendor")
++    vendor_diff.EmitExplicitTargetVerification(script)
++  script.AddToZip(target_zip, output_zip, input_path=OPTIONS.updater_binary)
++
++  WriteMetadata(metadata, output_zip)
++
++
++def main(argv):
++
++  def option_handler(o, a):
++    if o == "--board_config":
++      pass   # deprecated
++    elif o in ("-k", "--package_key"):
++      OPTIONS.package_key = a
++    elif o in ("-i", "--incremental_from"):
++      OPTIONS.incremental_source = a
++    elif o in ("-w", "--wipe_user_data"):
++      OPTIONS.wipe_user_data = True
++    elif o in ("-n", "--no_prereq"):
++      OPTIONS.omit_prereq = True
++    elif o in ("-o", "--oem_settings"):
++      OPTIONS.oem_source = a
++    elif o in ("-e", "--extra_script"):
++      OPTIONS.extra_script = a
++    elif o in ("-a", "--aslr_mode"):
++      if a in ("on", "On", "true", "True", "yes", "Yes"):
++        OPTIONS.aslr_mode = True
++      else:
++        OPTIONS.aslr_mode = False
++    elif o in ("-t", "--worker_threads"):
++      if a.isdigit():
++        OPTIONS.worker_threads = int(a)
++      else:
++        raise ValueError("Cannot parse value %r for option %r - only "
++                         "integers are allowed." % (a, o))
++    elif o in ("-2", "--two_step"):
++      OPTIONS.two_step = True
++    elif o == "--no_signing":
++      OPTIONS.no_signing = True
++    elif o in ("--verify"):
++      OPTIONS.verify = True
++    elif o == "--block":
++      OPTIONS.block_based = True
++    elif o in ("-b", "--binary"):
++      OPTIONS.updater_binary = a
++    elif o in ("--no_fallback_to_full",):
++      OPTIONS.fallback_to_full = False
++    else:
++      return False
++    return True
++
++  args = common.ParseOptions(argv, __doc__,
++                             extra_opts="b:k:i:d:wne:t:a:2o:",
++                             extra_long_opts=["board_config=",
++                                              "package_key=",
++                                              "incremental_from=",
++                                              "wipe_user_data",
++                                              "no_prereq",
++                                              "extra_script=",
++                                              "worker_threads=",
++                                              "aslr_mode=",
++                                              "two_step",
++                                              "no_signing",
++                                              "block",
++                                              "binary=",
++                                              "oem_settings=",
++                                              "verify",
++                                              "no_fallback_to_full",
++                                              ],
++                             extra_option_handler=option_handler)
++
++  if len(args) != 2:
++    common.Usage(__doc__)
++    sys.exit(1)
++
++  if OPTIONS.extra_script is not None:
++    OPTIONS.extra_script = open(OPTIONS.extra_script).read()
++
++  print "unzipping target target-files..."
++  OPTIONS.input_tmp, input_zip = common.UnzipTemp(args[0])
++
++  OPTIONS.target_tmp = OPTIONS.input_tmp
++  OPTIONS.info_dict = common.LoadInfoDict(input_zip)
++
++  # If this image was originally labelled with SELinux contexts, make sure we
++  # also apply the labels in our new image. During building, the "file_contexts"
++  # is in the out/ directory tree, but for repacking from target-files.zip it's
++  # in the root directory of the ramdisk.
++  if "selinux_fc" in OPTIONS.info_dict:
++    OPTIONS.info_dict["selinux_fc"] = os.path.join(OPTIONS.input_tmp, "BOOT", "RAMDISK",
++        "file_contexts")
++
++  if OPTIONS.verbose:
++    print "--- target info ---"
++    common.DumpInfoDict(OPTIONS.info_dict)
++
++  # If the caller explicitly specified the device-specific extensions
++  # path via -s/--device_specific, use that.  Otherwise, use
++  # META/releasetools.py if it is present in the target target_files.
++  # Otherwise, take the path of the file from 'tool_extensions' in the
++  # info dict and look for that in the local filesystem, relative to
++  # the current directory.
++
++  if OPTIONS.device_specific is None:
++    from_input = os.path.join(OPTIONS.input_tmp, "META", "releasetools.py")
++    if os.path.exists(from_input):
++      print "(using device-specific extensions from target_files)"
++      OPTIONS.device_specific = from_input
++    else:
++      OPTIONS.device_specific = OPTIONS.info_dict.get("tool_extensions", None)
++
++  if OPTIONS.device_specific is not None:
++    OPTIONS.device_specific = os.path.abspath(OPTIONS.device_specific)
++
++  while True:
++
++    if OPTIONS.no_signing:
++      if os.path.exists(args[1]): os.unlink(args[1])
++      output_zip = zipfile.ZipFile(args[1], "w", compression=zipfile.ZIP_DEFLATED)
++    else:
++      temp_zip_file = tempfile.NamedTemporaryFile()
++      output_zip = zipfile.ZipFile(temp_zip_file, "w",
++                                   compression=zipfile.ZIP_DEFLATED)
++
++    if OPTIONS.incremental_source is None:
++      WriteFullOTAPackage(input_zip, output_zip)
++      if OPTIONS.package_key is None:
++        OPTIONS.package_key = OPTIONS.info_dict.get(
++            "default_system_dev_certificate",
++            "build/target/product/security/testkey")
++      break
++
++    else:
++      print "unzipping source target-files..."
++      OPTIONS.source_tmp, source_zip = common.UnzipTemp(OPTIONS.incremental_source)
++      OPTIONS.target_info_dict = OPTIONS.info_dict
++      OPTIONS.source_info_dict = common.LoadInfoDict(source_zip)
++      if "selinux_fc" in OPTIONS.source_info_dict:
++        OPTIONS.source_info_dict["selinux_fc"] = os.path.join(OPTIONS.source_tmp, "BOOT", "RAMDISK",
++                                                              "file_contexts")
++      if OPTIONS.package_key is None:
++        OPTIONS.package_key = OPTIONS.source_info_dict.get(
++            "default_system_dev_certificate",
++            "build/target/product/security/testkey")
++      if OPTIONS.verbose:
++        print "--- source info ---"
++        common.DumpInfoDict(OPTIONS.source_info_dict)
++      try:
++        WriteIncrementalOTAPackage(input_zip, source_zip, output_zip)
++        break
++      except ValueError:
++        if not OPTIONS.fallback_to_full: raise
++        print "--- failed to build incremental; falling back to full ---"
++        OPTIONS.incremental_source = None
++        output_zip.close()
++
++  output_zip.close()
++
++  if not OPTIONS.no_signing:
++    SignOutput(temp_zip_file.name, args[1])
++    temp_zip_file.close()
++
++  print "done."
++
++
++if __name__ == '__main__':
++  try:
++    common.CloseInheritedPipes()
++    main(sys.argv[1:])
++  except common.ExternalError, e:
++    print
++    print "   ERROR: %s" % (e,)
++    print
++    sys.exit(1)
++  finally:
++    common.Cleanup()
+-- 
+2.1.4
+
+
+From 5b149248df83c61116035e3277c64519a676f38e Mon Sep 17 00:00:00 2001
+From: Chirayu Desai <chirayudesai1@gmail.com>
+Date: Thu, 27 Sep 2012 18:11:25 +0530
+Subject: [PATCH 12/15] envsetup: set OUT_DIR to an absolute path always
+
+OUT_DIR was set to $(TOPDIR)out previously,
+but $(TOPDIR) was null, so it was a relative path.
+This broke releasetools, inline kernel building, etc
+since they require absolute paths.
+Fix it so that it is set to $(shell readlink -f .)/out
+if $(TOPDIR) is null.
+
+Also remove hacks which checked if (OUT_DIR) was out
+and changed it to $(ANDROID_BUILD_TOP)/out to workaround
+the aforementioned problem.
+
+Change-Id: I459a3b1325a1bbea0565cd73f6acf160d4ed9b39
+---
+ core/envsetup.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/core/envsetup.mk b/core/envsetup.mk
+index 015cfee..1ae9744 100644
+--- a/core/envsetup.mk
++++ b/core/envsetup.mk
+@@ -197,8 +197,12 @@ endif
+ 
+ ifeq (,$(strip $(OUT_DIR)))
+ ifeq (,$(strip $(OUT_DIR_COMMON_BASE)))
++ifneq ($(TOPDIR),)
+ OUT_DIR := $(TOPDIR)out
+ else
++OUT_DIR := $(shell readlink -f .)/out
++endif
++else
+ OUT_DIR := $(OUT_DIR_COMMON_BASE)/$(notdir $(PWD))
+ endif
+ endif
+-- 
+2.1.4
+
+
+From 351f773a3a02bffe477fbbc16f0c2c291a62d7dd Mon Sep 17 00:00:00 2001
+From: David Ferguson <ferguson.david@gmail.com>
+Date: Thu, 4 Oct 2012 10:15:58 -0400
+Subject: [PATCH 13/15] build: work around missing readlink -f on Mac
+
+Change-Id: I5d56366cf33a2b02f1886c87815d00cff279779d
+---
+ core/envsetup.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/envsetup.mk b/core/envsetup.mk
+index 1ae9744..c96be84 100644
+--- a/core/envsetup.mk
++++ b/core/envsetup.mk
+@@ -200,7 +200,7 @@ ifeq (,$(strip $(OUT_DIR_COMMON_BASE)))
+ ifneq ($(TOPDIR),)
+ OUT_DIR := $(TOPDIR)out
+ else
+-OUT_DIR := $(shell readlink -f .)/out
++OUT_DIR := $(shell python -c 'import os,sys; print os.path.realpath(sys.argv[1])' .)/out
+ endif
+ else
+ OUT_DIR := $(OUT_DIR_COMMON_BASE)/$(notdir $(PWD))
+-- 
+2.1.4
+
+
+From 375443cb3cc7c3633b6841719dacd44b05327000 Mon Sep 17 00:00:00 2001
+From: Chirayu Desai <cdesai@cyanogenmod.org>
+Date: Wed, 1 May 2013 15:48:08 +0530
+Subject: [PATCH 14/15] envsetup: use $(CURDIR) for getting current directory
+
+Change-Id: I5f00faf64ec31d86dd2e48ec038748ce8499380b
+---
+ core/envsetup.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/envsetup.mk b/core/envsetup.mk
+index c96be84..9f0bf1a 100644
+--- a/core/envsetup.mk
++++ b/core/envsetup.mk
+@@ -200,7 +200,7 @@ ifeq (,$(strip $(OUT_DIR_COMMON_BASE)))
+ ifneq ($(TOPDIR),)
+ OUT_DIR := $(TOPDIR)out
+ else
+-OUT_DIR := $(shell python -c 'import os,sys; print os.path.realpath(sys.argv[1])' .)/out
++OUT_DIR := $(CURDIR)/out
+ endif
+ else
+ OUT_DIR := $(OUT_DIR_COMMON_BASE)/$(notdir $(PWD))
+-- 
+2.1.4
+
+
+From 1593dfb93b0d406121276dc91c2f3842712419eb Mon Sep 17 00:00:00 2001
+From: Ricardo Cerqueira <cyanogenmod@cerqueira.org>
+Date: Tue, 12 Apr 2011 10:57:22 +0100
+Subject: [PATCH 15/15] Allow a device to generically define its own headers
+
+We have a few cases of devices including specific versions of projects
+just because of modified headers (msm_mdp.h comes to mind), and I just
+had enough of ifdeffing header files for specific cases (the P990 needs
+a lot of these).
+Now... if a target defines a TARGET_SPECIFIC_HEADER_PATH, any headers in
+there will take precedence over the standard ones; for example, on the
+p990, I have
+
+TARGET_SPECIFIC_HEADER_PATH := device/lge/p990/include
+
+which makes, for example, the
+device/lge/p990/include/hardware_legacy/AudioHardwareInterface.h be
+used instead of
+hardware/libhardware_legacy/include/hardware_legacy/AudioHardwareInterface.h
+whenever a source file uses <hardware_legacy/AudioHardwareInterface.h>
+
+Change-Id: I41b62668b60e3f62a6ebd3738d8d2675103a81e6a
+
+build: fix target header overlay
+
+LOCAL_C_INCLUDES as defined by the makefile should be put AFTER
+the overlay includes so the overlay always takes precedence.
+
+Change-Id: I489b2aab6dbacd9122d834f85e07b63ed1271f07
+---
+ core/binary.mk | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/core/binary.mk b/core/binary.mk
+index d3d050e..81b8650 100644
+--- a/core/binary.mk
++++ b/core/binary.mk
+@@ -927,6 +927,11 @@ normal_objects := \
+ 
+ all_objects := $(normal_objects) $(gen_o_objects)
+ 
++## Allow a device's own headers to take precedence over global ones
++ifneq ($(TARGET_SPECIFIC_HEADER_PATH),)
++my_c_includes := $(TOPDIR)$(TARGET_SPECIFIC_HEADER_PATH) $(my_c_includes)
++endif
++
+ my_c_includes += $(TOPDIR)$(LOCAL_PATH) $(intermediates) $(generated_sources_dir)
+ 
+ ifndef LOCAL_SDK_VERSION
+-- 
+2.1.4
+
