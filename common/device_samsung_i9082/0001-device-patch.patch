@@ -1,0 +1,41 @@
+From 5ad98ce9ccd0db275d9dbe585027d27476997162 Mon Sep 17 00:00:00 2001
+From: k2wl <kar2wlan@gmail.com>
+Date: Thu, 2 Jul 2015 05:12:14 +0000
+Subject: [PATCH] device patch
+
+Signed-off-by: k2wl <kar2wlan@gmail.com>
+---
+ BoardConfig.mk | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 3e0afe1..e87cdb9 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -11,6 +11,7 @@ TARGET_CPU_ABI2 := armeabi
+ TARGET_ARCH_VARIANT := armv7-a-neon
+ TARGET_CPU_VARIANT := cortex-a9
+ TARGET_CPU_SMP := true
++TARGET_OTA_ASSERT_DEVICE := i9082,I9082,baffin,i9082L
+ 
+ TARGET_BOOTLOADER_BOARD_NAME := capri
+ 
+@@ -42,6 +43,15 @@ TARGET_KERNEL_CONFIG := cyanogenmod_i9082_defconfig
+ BOARD_HAS_NO_SELECT_BUTTON := true
+ BOARD_HAS_LARGE_FILESYSTEM := true
+ 
++# Enable dex-preoptimization to speed up first boot sequence
++ifeq ($(HOST_OS),linux)
++  ifeq ($(TARGET_BUILD_VARIANT),user)
++    ifeq ($(WITH_DEXPREOPT),)
++      WITH_DEXPREOPT := true
++    endif
++  endif
++endif
++
+ # Bluetooth
+ BOARD_HAVE_BLUETOOTH := true
+ BOARD_HAVE_BLUETOOTH_BCM := true
+-- 
+2.4.5
+
