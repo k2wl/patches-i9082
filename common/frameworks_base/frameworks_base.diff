@@ -1,7 +1,7 @@
-From b64a060f50a865185c87df3eee908e9fc017ac88 Mon Sep 17 00:00:00 2001
+From 8be5f60f89c998043f45e1e5273365674e2c3418 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 15 Nov 2014 14:50:29 +0700
-Subject: [PATCH 1/7] TelephonyManager: set properties in Broadcom-style as
+Subject: [PATCH 1/6] TelephonyManager: set properties in Broadcom-style as
  expected by RIL
 
 For i9082
@@ -12,10 +12,10 @@ Change-Id: I475fdd164b3316720387fefb14a3e12fbc262b39
  1 file changed, 20 insertions(+), 43 deletions(-)
 
 diff --git a/telephony/java/android/telephony/TelephonyManager.java b/telephony/java/android/telephony/TelephonyManager.java
-index 2415165..ee1500a 100644
+index 47f13c9..9c04ec7 100644
 --- a/telephony/java/android/telephony/TelephonyManager.java
 +++ b/telephony/java/android/telephony/TelephonyManager.java
-@@ -3191,49 +3191,19 @@ public class TelephonyManager {
+@@ -3201,49 +3201,19 @@ public class TelephonyManager {
       * @hide
       */
      public static void setTelephonyProperty(int phoneId, String property, String value) {
@@ -70,7 +70,7 @@ index 2415165..ee1500a 100644
      }
  
      /**
-@@ -3330,15 +3300,22 @@ public class TelephonyManager {
+@@ -3340,15 +3310,22 @@ public class TelephonyManager {
       * @hide
       */
      public static String getTelephonyProperty(int phoneId, String property, String defaultVal) {
@@ -102,13 +102,13 @@ index 2415165..ee1500a 100644
  
      /** @hide */
 -- 
-2.3.8 (Apple Git-58)
+2.6.2
 
 
-From 89c0a3ec3186ab5a4659711045b11e7517051e1b Mon Sep 17 00:00:00 2001
+From 4b3d4d06b41c8467adfe97d5f194c3eec3c17f43 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
-Date: Sat, 15 Nov 2014 22:33:16 +0700
-Subject: [PATCH 2/7] Camera: HACK: i9082: API hacks
+Date: Sat, 15 Nov 2014 14:50:29 +0700
+Subject: [PATCH 2/6] Camera: HACK: i9082: API hacks
 
 CTS 5.0 requires the presence of an auto mode, so applications
 may try to use auto without checking.
@@ -162,39 +162,52 @@ index 1aee794..e7c5313 100644
                  throw new CameraRuntimeException(CAMERA_DEPRECATED_HAL);
              case INVALID_OPERATION:
 -- 
-2.3.8 (Apple Git-58)
+2.6.2
 
 
-From 3c3de4d900a0a0e4e5d803c7a5df4a4ce4f38a47 Mon Sep 17 00:00:00 2001
+From e651013a205e1d0cfe1b5a9a6bd27c14da7cad33 Mon Sep 17 00:00:00 2001
 From: Ricardo Cerqueira <cyanogenmod@cerqueira.org>
 Date: Mon, 4 Nov 2013 02:22:43 +0000
-Subject: [PATCH 3/7] Forward port Samsung STK support (frameworks/base)
+Subject: [PATCH 3/6] Forward port Samsung STK support (frameworks/base)
 
 [pawitp: port to Lollipop]
 
 Change-Id: I08d169bc466df290fca838b09f6b0fbea2ac82a8
 ---
- core/res/res/values/config.xml                                  | 2 ++
+ core/res/res/values/config.xml                                  | 6 +++++-
  core/res/res/values/symbols.xml                                 | 2 ++
  telephony/java/com/android/internal/telephony/RILConstants.java | 1 +
- 3 files changed, 5 insertions(+)
+ 3 files changed, 8 insertions(+), 1 deletion(-)
+ mode change 100644 => 100755 core/res/res/values/symbols.xml
 
 diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
-index ae8cae8..64f77f2 100755
+index 17a4cc9..68e2362 100644
 --- a/core/res/res/values/config.xml
 +++ b/core/res/res/values/config.xml
-@@ -2270,4 +2270,6 @@
+@@ -2338,11 +2338,15 @@
+          Array of "code#,retry#"  -->
      <string-array name="config_cell_retries_per_error_code">
      </string-array>
- 
++
+     <!-- Whether doze should invert colors for notifications. If the RRO theme causes
+     the NORMAL notification background to be dark and the text to be light, this boolean
+     needs to be set to false, to prevent the doze notifications from being light -->
+     <bool name="config_invert_colors_on_doze">true</bool>
+-    
++
 +    <!-- Boolean to enable stk functionality on Samsung phones -->
 +    <bool name="config_samsung_stk">false</bool>
- </resources>
++
+     <!-- Set initial MaxRetry value for operators -->
+     <integer name="config_mdc_initial_max_retry">1</integer>
+ 
 diff --git a/core/res/res/values/symbols.xml b/core/res/res/values/symbols.xml
-index 262aa76..c9fbc98 100755
+old mode 100644
+new mode 100755
+index 7941d3c..5ed28b0
 --- a/core/res/res/values/symbols.xml
 +++ b/core/res/res/values/symbols.xml
-@@ -2194,6 +2194,8 @@
+@@ -2197,6 +2197,8 @@
    <java-symbol type="bool" name="config_defaultWindowFeatureOptionsPanel" />
    <java-symbol type="bool" name="config_defaultWindowFeatureContextMenu" />
  
@@ -204,23 +217,23 @@ index 262aa76..c9fbc98 100755
    <java-symbol type="array" name="config_sms_convert_destination_number_support" />
    <java-symbol type="string" name="prohibit_manual_network_selection_in_gobal_mode" />
 diff --git a/telephony/java/com/android/internal/telephony/RILConstants.java b/telephony/java/com/android/internal/telephony/RILConstants.java
-index 8d48c86..c1da224 100644
+index 7088be8..0b99052 100644
 --- a/telephony/java/com/android/internal/telephony/RILConstants.java
 +++ b/telephony/java/com/android/internal/telephony/RILConstants.java
-@@ -372,4 +372,5 @@ cat include/telephony/ril.h | \
+@@ -382,4 +382,5 @@ cat include/telephony/ril.h | \
      int RIL_UNSOL_ON_SS = 1043;
      int RIL_UNSOL_STK_CC_ALPHA_NOTIFY = 1044;
      int RIL_UNSOL_LCEDATA_RECV = 1045;
 +    int RIL_UNSOL_STK_SEND_SMS_RESULT = 11002; /* Samsung STK */
  }
 -- 
-2.3.8 (Apple Git-58)
+2.6.2
 
 
-From 2cc043faa21042087332e7740ecc1e57ad3e9342 Mon Sep 17 00:00:00 2001
+From 7ac0bb6aa351ce329358dedd2c4911dfeaae8150 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 15 Nov 2014 14:47:35 +0700
-Subject: [PATCH 4/7] frameworks: base: add KEYCODE_HOME to wake keys
+Subject: [PATCH 4/6] frameworks: base: add KEYCODE_HOME to wake keys
 
 Change-Id: I77d70df2263dd9c75b02efde18d91585b1ad29f9
 ---
@@ -228,25 +241,25 @@ Change-Id: I77d70df2263dd9c75b02efde18d91585b1ad29f9
  1 file changed, 1 insertion(+)
 
 diff --git a/core/java/android/view/KeyEvent.java b/core/java/android/view/KeyEvent.java
-index a9bf92b..b7a42f6 100644
+index be27524..9d6eff8 100644
 --- a/core/java/android/view/KeyEvent.java
 +++ b/core/java/android/view/KeyEvent.java
-@@ -1830,6 +1830,7 @@ public class KeyEvent extends InputEvent implements Parcelable {
-             case KeyEvent.KEYCODE_MENU:
-             case KeyEvent.KEYCODE_WAKEUP:
-             case KeyEvent.KEYCODE_PAIRING:
+@@ -1833,6 +1833,7 @@ public class KeyEvent extends InputEvent implements Parcelable {
+             case KeyEvent.KEYCODE_VOLUME_UP:
+             case KeyEvent.KEYCODE_VOLUME_DOWN:
+             case KeyEvent.KEYCODE_VOLUME_MUTE:
 +            case KeyEvent.KEYCODE_HOME:
                  return true;
          }
          return false;
 -- 
-2.3.8 (Apple Git-58)
+2.6.2
 
 
-From d29614fc29c9bb49653299e049082a144cf2f321 Mon Sep 17 00:00:00 2001
+From 561c43ef8cd36b2683bccca6670540431620ad78 Mon Sep 17 00:00:00 2001
 From: Ricardo Cerqueira <cyanogenmod@cerqueira.org>
 Date: Fri, 23 Nov 2012 14:23:16 +0000
-Subject: [PATCH 5/7] Reintroduce button-backlight (and respective inactivity
+Subject: [PATCH 5/6] Reintroduce button-backlight (and respective inactivity
  timeout)
 
 The power manager rewrite from Change I1d7a52e98f0449f76d70bf421f6a7f245957d1d7
@@ -259,15 +272,41 @@ until upstream does their own implementation
 
 Change-Id: I6094c446e0b8c23f57d30652a3cbd35dee5e821a
 ---
- .../com/android/server/display/DisplayPowerController.java     |  2 ++
+ .../com/android/server/display/DisplayPowerController.java     |  7 +++++++
  .../java/com/android/server/power/PowerManagerService.java     | 10 ++++++++++
- 2 files changed, 12 insertions(+)
+ 2 files changed, 17 insertions(+)
 
 diff --git a/services/core/java/com/android/server/display/DisplayPowerController.java b/services/core/java/com/android/server/display/DisplayPowerController.java
-index 452378f..bd45c0a 100644
+index 10cd308..af3f8f4 100644
 --- a/services/core/java/com/android/server/display/DisplayPowerController.java
 +++ b/services/core/java/com/android/server/display/DisplayPowerController.java
-@@ -595,6 +595,7 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
+@@ -22,6 +22,7 @@ import com.android.server.policy.keyguard.KeyguardServiceDelegate;
+ import com.android.server.policy.keyguard.KeyguardServiceWrapper;
+ import com.android.server.LocalServices;
+ import com.android.server.am.BatteryStatsService;
++import com.android.server.lights.LightsManager;
+ 
+ import android.animation.Animator;
+ import android.animation.ObjectAnimator;
+@@ -141,6 +142,9 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
+     // Battery stats.
+     private final IBatteryStats mBatteryStats;
+ 
++    // The lights service.
++    private final LightsManager mLights;
++
+     // The sensor manager.
+     private final SensorManager mSensorManager;
+ 
+@@ -302,6 +306,7 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
+         mCallbacks = callbacks;
+ 
+         mBatteryStats = BatteryStatsService.getService();
++        mLights = LocalServices.getService(LightsManager.class);
+         mSensorManager = sensorManager;
+         mWindowManagerPolicy = LocalServices.getService(WindowManagerPolicy.class);
+         mBlanker = blanker;
+@@ -721,6 +726,7 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
          // Use zero brightness when screen is off.
          if (state == Display.STATE_OFF) {
              brightness = PowerManager.BRIGHTNESS_OFF;
@@ -275,7 +314,7 @@ index 452378f..bd45c0a 100644
          }
  
          // Configure auto-brightness.
-@@ -646,6 +647,7 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
+@@ -772,6 +778,7 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
          if (brightness < 0 && (state == Display.STATE_DOZE
                  || state == Display.STATE_DOZE_SUSPEND)) {
              brightness = mScreenBrightnessDozeConfig;
@@ -284,7 +323,7 @@ index 452378f..bd45c0a 100644
  
          // Apply manual brightness.
 diff --git a/services/core/java/com/android/server/power/PowerManagerService.java b/services/core/java/com/android/server/power/PowerManagerService.java
-index b920f97..94245c7 100644
+index 3b40e61..95748c4 100644
 --- a/services/core/java/com/android/server/power/PowerManagerService.java
 +++ b/services/core/java/com/android/server/power/PowerManagerService.java
 @@ -159,6 +159,8 @@ public final class PowerManagerService extends SystemService
@@ -304,7 +343,7 @@ index b920f97..94245c7 100644
  
      private final Object mLock = new Object();
  
-@@ -540,6 +543,7 @@ public final class PowerManagerService extends SystemService
+@@ -543,6 +546,7 @@ public final class PowerManagerService extends SystemService
  
              mLightsManager = getLocalService(LightsManager.class);
              mAttentionLight = mLightsManager.getLight(LightsManager.LIGHT_ID_ATTENTION);
@@ -312,7 +351,7 @@ index b920f97..94245c7 100644
  
              // Initialize display power management.
              mDisplayManagerInternal.initPowerManagement(
-@@ -1531,6 +1535,12 @@ public final class PowerManagerService extends SystemService
+@@ -1549,6 +1553,12 @@ public final class PowerManagerService extends SystemService
                      nextTimeout = mLastUserActivityTime
                              + screenOffTimeout - screenDimDuration;
                      if (now < nextTimeout) {
@@ -326,13 +365,13 @@ index b920f97..94245c7 100644
                      } else {
                          nextTimeout = mLastUserActivityTime + screenOffTimeout;
 -- 
-2.3.8 (Apple Git-58)
+2.6.2
 
 
-From e4bbeb583f5a9e713827c4344a70ec9eeaacfdff Mon Sep 17 00:00:00 2001
+From b725d0d1f43721f91c549e719ea48ae348d6697f Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 14 Mar 2015 22:53:50 +0700
-Subject: [PATCH 6/7] PowerManagerService: only turn on button light when any
+Subject: [PATCH 6/6] PowerManagerService: only turn on button light when any
  button is pressed
 
 * Also reduce the timeout to 2 seconds
@@ -345,7 +384,7 @@ Change-Id: I6b15c45b713bcbc290a1026805c46109060f9990
  1 file changed, 8 insertions(+), 2 deletions(-)
 
 diff --git a/services/core/java/com/android/server/power/PowerManagerService.java b/services/core/java/com/android/server/power/PowerManagerService.java
-index 94245c7..afc728d 100644
+index 95748c4..434317b 100644
 --- a/services/core/java/com/android/server/power/PowerManagerService.java
 +++ b/services/core/java/com/android/server/power/PowerManagerService.java
 @@ -159,7 +159,7 @@ public final class PowerManagerService extends SystemService
@@ -365,7 +404,7 @@ index 94245c7..afc728d 100644
  
      // Timestamp of last interactive power hint.
      private long mLastInteractivePowerHintTime;
-@@ -1046,6 +1047,11 @@ public final class PowerManagerService extends SystemService
+@@ -1055,6 +1056,11 @@ public final class PowerManagerService extends SystemService
                      return true;
                  }
              } else {
@@ -377,7 +416,7 @@ index 94245c7..afc728d 100644
                  if (eventTime > mLastUserActivityTime) {
                      mLastUserActivityTime = eventTime;
                      mDirty |= DIRTY_USER_ACTIVITY;
-@@ -1535,7 +1541,7 @@ public final class PowerManagerService extends SystemService
+@@ -1553,7 +1559,7 @@ public final class PowerManagerService extends SystemService
                      nextTimeout = mLastUserActivityTime
                              + screenOffTimeout - screenDimDuration;
                      if (now < nextTimeout) {
@@ -387,49 +426,5 @@ index 94245c7..afc728d 100644
                          } else {
                              mButtonsLight.setBrightness(mDisplayPowerRequest.screenBrightness);
 -- 
-2.3.8 (Apple Git-58)
-
-
-From 5b9fc16d13006c334347d7ace3da4f5457735794 Mon Sep 17 00:00:00 2001
-From: Pawit Pornkitprasan <p.pawit@gmail.com>
-Date: Sat, 10 Oct 2015 22:37:18 +0700
-Subject: [PATCH 7/7] TOMERGE: DisplayPowerController.java
-
-Change-Id: I14d446d5f369f6e47a24878b977946009b7cb0c9
----
- .../core/java/com/android/server/display/DisplayPowerController.java | 5 +++++
- 1 file changed, 5 insertions(+)
-
-diff --git a/services/core/java/com/android/server/display/DisplayPowerController.java b/services/core/java/com/android/server/display/DisplayPowerController.java
-index bd45c0a..b1c3a77 100644
---- a/services/core/java/com/android/server/display/DisplayPowerController.java
-+++ b/services/core/java/com/android/server/display/DisplayPowerController.java
-@@ -19,6 +19,7 @@ package com.android.server.display;
- import com.android.internal.app.IBatteryStats;
- import com.android.server.LocalServices;
- import com.android.server.am.BatteryStatsService;
-+import com.android.server.lights.LightsManager;
- 
- import android.animation.Animator;
- import android.animation.ObjectAnimator;
-@@ -124,6 +125,9 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
-     // Battery stats.
-     private final IBatteryStats mBatteryStats;
- 
-+    // The lights service.
-+    private final LightsManager mLights;
-+
-     // The sensor manager.
-     private final SensorManager mSensorManager;
- 
-@@ -262,6 +266,7 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
-         mCallbacks = callbacks;
- 
-         mBatteryStats = BatteryStatsService.getService();
-+        mLights = LocalServices.getService(LightsManager.class);
-         mSensorManager = sensorManager;
-         mWindowManagerPolicy = LocalServices.getService(WindowManagerPolicy.class);
-         mBlanker = blanker;
--- 
-2.3.8 (Apple Git-58)
+2.6.2
 
